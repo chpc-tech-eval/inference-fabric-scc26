@@ -1,295 +1,176 @@
-Open LLM Inference Fabric — Ollama, llama.cpp & vLLM on CPU/GPU
-===============================================================
+# Open LLM Inference Fabric — Ollama, llama.cpp & vLLM on CPU/GPU
 
-Welcome. This repository is one of the CHPC student engineering projects for the 2026 SCC follow-on programme. You will spend the first four weeks building the same small cloud-native research platform as the other teams, then use that platform for your team's project-specific experiment.
-
-The project is intentionally ambitious, but the path is deliberately staged. **Do not try to understand every technology before you begin.** Build one layer, validate it, understand what it owns, then continue.
+Welcome to the CHPC SCC26 student engineering programme. The first four weeks are a common platform build shared by all five teams; Week 5 applies that platform to **Inference Fabric**, Week 6 produces the technical paper/poster and reproducibility evidence, and Week 7 consolidates the work.
 
 > [!IMPORTANT]
-> The objective is not to copy commands until something turns green. By the end, every team member should be able to explain the full platform at a useful high level, even though each person has a primary role.
+> You are not expected to know every technology on day one. Build one layer, validate it, understand what owns it, then continue. The goal is competence and reproducibility—not surviving a giant command dump.
 
-# Project question
+## Project question
 
-> Given a model, runtime, hardware class and service objective, what measured evidence should the platform use to choose an inference route?
+> Given a model, hardware class and service objective, what measurable evidence should determine the choice of inference runtime and resource placement?
 
-# Start here
-
-Work through the common platform weeks in order:
+## Start here
 
 1. [Week 1 — OpenStack → Terraform → Ansible](week1/README.md)
-2. [Week 2 — Kubernetes Substrate & GitOps](week2/README.md)
-3. [Week 3 — Observability, Security & Quantum Platform](week3/README.md)
+2. [Week 2 — Kubernetes substrate & GitOps](week2/README.md)
+3. [Week 3 — Observability, security & Student Project Platform](week3/README.md)
 4. [Week 4 — Agent Control Plane & Hermes](week4/README.md)
-5. **Week 5 — project-specific implementation**
-6. **Week 6 — technical journal article, poster and reproducibility rebuild**
-7. **Week 7 — consolidation, cleanup and upstream handover**
+5. **Week 5 — project-specific MVP**
+6. **Week 6 — IEEE-style short paper, poster and reproducibility rebuild**
+7. **Week 7 — consolidation and handover**
 
-The upstream implementation/reference repositories are:
+Read [CONTRIBUTING.md](CONTRIBUTING.md) before making repository changes and [docs/COMMAND-LOCATIONS.md](docs/COMMAND-LOCATIONS.md) before running infrastructure/Kubernetes commands.
 
-- [`nyameko/infra-hpc-qc-k8s`](https://github.com/nyameko/infra-hpc-qc-k8s) — OpenStack/Terraform, Ansible, Kubernetes, GitOps, storage, observability and security deployment;
-- [`nyameko/quantum-platform`](https://github.com/nyameko/quantum-platform) — Astro/Django/PostgreSQL user-facing platform;
-- [`nyameko/agent-control-plane`](https://github.com/nyameko/agent-control-plane) — bounded agent task API, persistent history and Hermes worker;
-- [`chpc-tech-eval/scc`](https://github.com/chpc-tech-eval/scc) — teaching/tutorial style and HPC learning lineage.
+## Programme cadence
 
-These repositories are active. Record the exact commit SHA you use each week. When a tested baseline is announced, keep the whole team on that baseline until instructed otherwise.
+- Core project: six weeks, followed by Week 7 consolidation.
+- Tentative collaborative working session: **Friday 14:00–18:00**.
+- Sebowa, A100 and H200 access are separate resource domains and may have different credentials/authorisation.
+- Current expected access horizon: **15 December 2026**, subject to instructor/provider updates.
+- Discord is the live collaboration space; GitHub is the engineering system of record.
 
-# Programme cadence
-
-The current plan is a **six-week core project** followed by **Week 7 consolidation**. Team captains should coordinate the Friday working session, tentatively **14:00–18:00**, through the programme Discord. The current expected infrastructure access window runs through **15 December 2026**; watch GitHub/Discord for any operational changes.
-
-Discord: https://discord.gg/PNMknPydJ
-
-# What you will build
-
-The common platform is approximately:
+## Common five-node POC
 
 | Role | vCPU | RAM | Storage | Purpose |
 | --- | ---: | ---: | ---: | --- |
 | `edge-01` | 4 | 10 GiB | 50 GiB | WireGuard, Pi-hole/DNS, nftables, Wazuh Manager, Suricata |
 | `api-lb-01` | 2 | 4 GiB | 25 GiB | HAProxy and stable Kubernetes API endpoint |
-| `k8s-cp-01` | 4 | 8 GiB | 30 GiB | Kubernetes control plane |
+| `k8s-cp-01` | 4 | 8 GiB | 30 GiB | Kubernetes control plane and cluster administration point |
 | `k8s-worker-01` | 8 | 16 GiB | 40 GiB | platform/workbench/project workloads |
 | `k8s-worker-02` | 8 | 16 GiB | 40 GiB | platform/workbench/project workloads |
-| **POC total** | **26** | **54 GiB** | **185 GiB** | excluding separately allocated GPU systems |
+| **POC total** | **26** | **54 GiB** | **185 GiB** | excludes separate A100/H200 resources |
 
-Your team may adjust the final design within the project quota, but every change needs a technical reason.
+Your team owns the final architecture. If you depart from this baseline, document the reason and the evidence supporting the change.
 
-## Common architecture
-
-```text
-                              Your workstation
-                                    │
-                                    │ WireGuard / SSH
-                                    ▼
-                              ┌───────────┐
-                              │  edge-01  │
-                              │ VPN / DNS │
-                              │ security  │
-                              └─────┬─────┘
-                                    │
-                  ┌─────────────────┴──────────────────┐
-                  │                                    │
-                  ▼                                    ▼
-            ┌───────────┐                       ┌─────────────┐
-            │ api-lb-01 │                       │ Kubernetes  │
-            │  HAProxy  │                       │   cluster   │
-            └─────┬─────┘                       └──────┬──────┘
-                  │                                    │
-                  │ :6443                       ┌──────┴──────┐
-                  └────────────────────────────►│ k8s-cp-01  │
-                                               └──────┬──────┘
-                                                      │
-                                             ┌────────┴────────┐
-                                             ▼                 ▼
-                                      ┌─────────────┐   ┌─────────────┐
-                                      │k8s-worker-01│   │k8s-worker-02│
-                                      └─────────────┘   └─────────────┘
-```
-
-
-A100 and H200 access is **separate** from the Sebowa OpenStack project. The normal design is for small services/agents in Kubernetes to call approved model endpoints remotely.
-
-# Why the first four weeks are shared
-
-All four projects depend on the same engineering foundations. The common build teaches the control boundaries once:
+## The operating model
 
 ```text
-Terraform       → OpenStack infrastructure
-Ansible         → Linux host configuration/bootstrap
-kubeadm         → Kubernetes bootstrap
-Cilium          → Kubernetes networking/policy
-Cinder CSI      → Kubernetes persistent block storage
-Argo CD         → long-lived Kubernetes application state
-Sealed Secrets  → encrypted secret material in GitOps
-Traefik         → application ingress
-Prometheus      → metrics collection
-Grafana         → metrics visualisation
-Wazuh           → host/security event evidence
-Suricata        → network IDS evidence
-Quantum Platform→ user identity/product surface
-Agent Control Plane → bounded agent tasks/history/policy
-Hermes          → agent runtime/harness
-A100/H200 model server → inference
+                    STUDENT WORKSTATION
+          Git · OpenStack CLI · Terraform · Ansible · kubeseal
+                              │
+                     provision/configure
+                              ▼
+                    SEBOWA OPENSTACK
+        edge-01 · api-lb-01 · k8s-cp-01 · workers
+                              │
+                              ▼
+                       KUBERNETES
+         Cilium · Cinder · Argo CD · Traefik · monitoring
+                   │                    │
+                   │                    └── Student Project Platform
+                   │                               │
+                   └───────────────────────────────┤
+                                                   ▼
+                                          Agent Control Plane
+                                                   │
+                                                Hermes
+                                                   │
+                                      approved remote inference
+                                           ┌───────┴───────┐
+                                           ▼               ▼
+                                         A100             H200
 ```
 
-If you do not know a term yet, that is expected. The weekly tutorials introduce it when you need it.
+**Kubernetes administration happens from `k8s-cp-01`, not from your personal workstation.** Permanent Kubernetes application changes live in Git and are reconciled by Argo CD.
 
-# Six-week core + Week 7 consolidation
+## One team repository
 
-| Week | Common goal | Exit condition |
+You need only this repository for the student project. It contains student-sized infrastructure, Student Project Platform source/configuration, GitOps desired state, project-specific work, evidence, paper and poster material. See [docs/REPOSITORY-MODEL.md](docs/REPOSITORY-MODEL.md).
+
+You are **not required to clone** the production `quantum-platform` repository. You are also not required to clone ACP just to operate it; use pinned instructor-approved images and configuration first.
+
+## Weeks 1–4: common platform qualification
+
+| Week | Goal | Exit gate |
 | --- | --- | --- |
-| 1 | OpenStack → Terraform → Ansible | five-node POC reproducibly deployed and bootstrapped |
-| 2 | Kubernetes substrate + GitOps | 1 CP + 2 workers, Cilium, Cinder, Argo, Sealed Secrets, Traefik/TLS |
-| 3 | Observability/security + Quantum Platform | Prometheus/Grafana, Wazuh/Suricata evidence and working browser login |
-| 4 | ACP + Hermes | portal → ACP → evidence → Hermes → remote model round trip |
-| 5 | Project specialisation | project-specific MVP demonstrated on the common platform |
-| 6 | Report + reproducibility | 2-page technical journal article, poster and tear-down/rebuild evidence |
-| 7 | Consolidation | cleanup, final fixes, documented handover and upstream-ready contributions |
+| 1 | OpenStack → Terraform → Ansible | five-node POC reproducibly provisioned and host bootstrap validated |
+| 2 | Kubernetes + GitOps | 1 CP + 2 workers, Cilium, Cinder, Argo, Sealed Secrets, Traefik/TLS |
+| 3 | observability/security + Student Project Platform | live metrics, fresh Wazuh/Suricata evidence and authenticated browser platform with persistent DB |
+| 4 | ACP + Hermes | Student Platform → ACP → evidence → Hermes → approved remote model → persistent history |
 
-### Week 5 — Inference Fabric experiments
+## Week 5 — Inference Fabric
 
-Your common platform becomes the client, telemetry and orchestration environment for a controlled inference study. You will compare **Ollama**, **llama.cpp** and **vLLM** across CPU and the separately allocated A100/H200 resources where compatible.
+Establish CPU Ollama/llama.cpp baselines, then exercise approved A100/H200 endpoints with Ollama, llama.cpp and vLLM where compatible. Collect latency, throughput and resource telemetry under a controlled workload and expose the resulting endpoint catalogue to ACP.
 
-Keep the scientific comparison fair: use the same logical model or the closest compatible representation, the same prompt corpus, comparable generation settings and clearly recorded hardware allocations.
+Minimum project evidence:
 
-Required Week 5 outcomes:
+- A common model/workload compared fairly across compatible runtimes.
+- CPU baseline plus at least one A100 or H200 GPU baseline.
+- Machine-readable measurements for TTFT/latency/throughput and errors.
+- CPU/RAM/GPU/VRAM telemetry correlated to benchmark windows.
+- A runtime/model/execution-class catalogue and workload-specific conclusions—not a universal winner.
 
-- CPU baseline for Ollama and/or llama.cpp;
-- at least one A100 or H200 GPU baseline;
-- vLLM deployment on a compatible NVIDIA resource;
-- machine-readable measurement of latency, throughput and resource usage;
-- Prometheus/Grafana visibility of the client/platform side and available inference telemetry;
-- an ACP/Hermes configuration that can call at least one approved remote endpoint;
-- a short evidence-based explanation of when each runtime is useful.
+## Week 6 — publication + reproducibility
 
-Do **not** try to crown a universal winner. Your result must be conditional on workload, model, hardware and service objective.
+Week 6 is not “show the cluster that has survived since Week 2”. You must demonstrate that the system can be reconstructed from its declared sources and protected inputs.
 
+Deliverables:
 
-# Week 6 — report, poster and reproducibility
-
-Your final Week 6 assessment is **not** "our environment has been alive for six weeks." You must demonstrate that the project is reproducible.
-
-At minimum:
-
-1. preserve the required state/results and record the exact source/image revisions;
-2. tear down the disposable infrastructure using the documented method;
-3. recreate the common platform from your Terraform/Ansible/GitOps sources and protected environment inputs;
-4. rerun the core acceptance checks;
-5. rerun the project-specific MVP or a representative reproducibility test;
-6. record failures, manual exceptions and time-consuming steps honestly.
-
-You will prepare:
-
-- a **two-page technical journal-style article**;
-- a **project poster**;
+- a **3–5 page, two-column IEEE-style technical paper** using the scaffold under [`paper/`](paper/README.md);
+- a high-quality technical poster using [`poster/`](poster/README.md);
 - a short live demonstration;
-- reproducibility evidence.
+- a tear-down/rebuild or instructor-approved equivalent reproducibility exercise;
+- exact Git SHAs, image digests, configuration/experiment identifiers and acceptance evidence;
+- an honest limitations/failure section.
 
-The article/poster should answer: problem, architecture, method, evidence/results, limitations, lessons learned and future work.
+## Week 7 — consolidation
 
-# Week 7 — consolidation
+Use Week 7 to fix documentation revealed by the rebuild, close/triage issues, remove stale resources and secrets, prepare clean upstream contributions where appropriate, and merge the reviewed `dev` release state into protected `main`.
 
-Use the consolidation week to:
+## Four student roles
 
-- fix documentation discovered to be incomplete during the rebuild;
-- clean secrets/test credentials and stale resources;
-- turn useful project changes into clear commits/PRs;
-- identify improvements that belong upstream in `infra-hpc-qc-k8s`, `quantum-platform` or `agent-control-plane`;
-- freeze final results and architecture diagrams;
-- make the repository understandable to the next student who did not attend your meetings.
-
-# Team roles
-
-There are four students per team. Use the following primary ownership areas to parallelise the work:
-
-| Role | Primary responsibility |
+| Primary role | Ownership |
 | --- | --- |
 | **Infrastructure deployment** | OpenStack, Terraform, networking, security groups, DNS/firewall design |
-| **Cloud automation** | Ansible, Kubernetes, Cilium, Cinder |
-| **CI/CD, telemetry & security** | Argo CD, CI, Prometheus/Grafana, Wazuh, Suricata |
-| **Frontend, agents & specialisation** | Astro/Quantum Platform, ACP, Hermes and project-specific implementation |
+| **Cloud automation** | Ansible, Kubernetes bootstrap, Cilium, Cinder |
+| **CI/CD, telemetry & security** | GitHub Actions, Argo CD, Prometheus/Grafana, Wazuh, Suricata |
+| **Frontend, agents & project specialisation** | Student Project Platform, ACP/Hermes integration and Week-5 work |
 
-These are **not silos**. Rotate ownership after major milestones and review one another's work. Any team member may be asked to explain any part of the final architecture.
+These are starting responsibilities, not silos. Rotate ownership after major milestones and make sure every team member can explain the full architecture.
 
-# Working method
+## Engineering rules
 
-Use the same pattern every week:
+1. **No plaintext secrets in Git.**
+2. **No `kubectl` or Argo administration from personal workstations.** Use `k8s-cp-01`.
+3. **No permanent `kubectl edit` fixes.** Diagnose imperatively; repair desired state in Git.
+4. **No direct student pushes to protected `main` or `dev`.** Use short-lived branches and PRs.
+5. **Do not treat Argo `Synced`, a green pod, or a successful Terraform command as end-to-end proof.** Validate the user/service outcome.
+6. **Record evidence as you work.** Do not try to reconstruct six weeks of provenance on submission day.
+7. **GPU access is separate from Sebowa.** Never assume Kubernetes has direct ownership of A100/H200 hardware unless the instructor explicitly configures it that way.
 
-```text
-READ
-  ↓
-DESIGN
-  ↓
-DEPLOY
-  ↓
-VERIFY
-  ↓
-BREAK / OBSERVE
-  ↓
-FIX
-  ↓
-DOCUMENT
-  ↓
-COMMIT
-```
+## Reference repositories
 
-A command completing without an error is not proof that the system works. Prefer end-to-end acceptance evidence.
+These are reference/upstream implementations, not mandatory student checkouts:
 
-> [!TIP]
-> **Show the working system, not slides about the working system.** Screenshots and diagrams are useful evidence, but they do not replace a live command, request, query or reproducible run.
+- `nyameko/infra-hpc-qc-k8s` — instructor/reference infrastructure architecture and deeper tutorials;
+- `nyameko/quantum-platform` — production portal architecture **for reference only**; students use Student Project Platform;
+- `nyameko/agent-control-plane` — upstream ACP/Hermes source and immutable images;
+- `chpc-tech-eval/scc` — teaching/tutorial style and HPC learning lineage.
 
-# Git workflow
+When the instructor announces a tested version/image, record it. Avoid silently mixing different weekly baselines across team members.
 
-Keep changes small and reviewable. A simple student flow is:
+## What success looks like
+
+A successful team can explain and reproduce this chain:
 
 ```text
-feature/<short-topic>
-        ↓ Pull Request
-      main
+Git / Terraform / Ansible
+          ↓
+OpenStack infrastructure
+          ↓
+Kubernetes + Cilium + Cinder
+          ↓
+GitHub + Argo CD
+          ↓
+observability + security evidence
+          ↓
+Student Project Platform
+          ↓
+Agent Control Plane + Hermes
+          ↓
+project-specific result
+          ↓
+paper/poster with traceable evidence
 ```
 
-Use issues for tasks/bugs and pull requests for reviewed changes. Do not store secrets in issue comments, Discord, screenshots or Git history.
-
-Before pushing:
-
-```bash
-git status
-git diff --cached
-```
-
-Commit messages should say what changed and why.
-
-# Secrets and safety
-
-Never commit:
-
-- OpenStack credentials/application-credential secrets;
-- private SSH or WireGuard keys;
-- kubeconfigs;
-- plaintext Kubernetes Secrets;
-- database passwords;
-- model API keys;
-- Discord bot tokens;
-- TLS private keys.
-
-Use the approved private-variable/Vault/Sealed Secret workflow described in the weekly guides.
-
-A useful project layout after the common deployment is:
-
-```text
-inference-fabric-scc26/
-├── README.md
-├── week1/ ... week4/
-├── deploy/
-│   ├── ollama/
-│   ├── llama-cpp/
-│   └── vllm/
-├── benchmarks/
-├── results/
-├── dashboards/
-└── reports/
-```
-
-Benchmark results should record versions, model identity, hardware allocation and test parameters. Never commit API keys or provider credentials.
-
-
-# Final project deliverable
-
-A reproducible CPU/GPU inference comparison with pinned runtime/model information, measurable latency/throughput/resource evidence and an endpoint catalogue usable by Agent Control Plane experiments.
-
-# Getting help
-
-Use your project repository for technical issues and decisions, and the programme Discord for collaborative teaching/discussion. When asking for help, include:
-
-```text
-what you expected
-what actually happened
-the exact command/request
-relevant error/log excerpt
-which layer you already checked
-source commit(s) in use
-```
-
-Redact credentials and private infrastructure values.
-
-Most importantly: **Keep Calm and Carry On.** The purpose is to learn how the layers fit together, not to already know them on day one.
+Keep calm, ask good questions, validate one layer at a time, and leave the repository better than you found it.

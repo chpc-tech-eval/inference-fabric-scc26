@@ -1,394 +1,260 @@
-Week 3: Observability, Security & Quantum Platform
-===================================================
+# Week 3 — Observability, Security & Student Project Platform
 
-This is the week your cluster stops being a collection of mostly opaque services and becomes something you can **observe, investigate and use through a browser**.
+This week answers two questions:
 
-You will deploy and validate three different kinds of visibility:
+1. **Can we see what the platform is doing?**
+2. **Can a real user reach an authenticated, persistent application deployed through our GitOps path?**
+
+You are **not cloning/deploying the production `quantum-platform` repository**. The student exercise uses a deliberately smaller **Student Project Platform** contained in this team repository.
+
+# Where commands run
+
+This programme has a deliberately strict administration boundary. **Do not install or use `kubectl` or the Argo CD CLI on your personal workstation for this project.**
+
+| Location | Tools / responsibilities |
+| --- | --- |
+| **Your workstation / laptop / desktop** | Git, SSH, OpenStack CLI, Terraform, Ansible and `kubeseal` |
+| **GitHub** | source control, pull requests, CI, container builds, GHCR images and GitOps desired state |
+| **`edge-01`** | WireGuard, Pi-hole/DNS, nftables, Wazuh Manager, Suricata and edge troubleshooting |
+| **`api-lb-01`** | HAProxy and API-endpoint troubleshooting |
+| **`k8s-cp-01`** | `kubectl`, Cilium CLI, Kubernetes bootstrap/diagnostics and any optional Argo CD CLI use |
+| **Kubernetes** | Argo CD, Cinder CSI, Traefik, cert-manager, Prometheus/Grafana, Wazuh components, Student Project Platform, ACP and Hermes |
+| **A100/H200 systems** | separately authorised model serving or project-specific GPU experiments |
+
+A command block in these tutorials is prefixed with its execution location. For example:
+
+```bash
+# RUN ON: WORKSTATION
+terraform plan
+```
+
+or:
+
+```bash
+# RUN ON: k8s-cp-01
+kubectl get nodes
+```
+
+The objective is to keep Kubernetes credentials and cluster administration **inside the cluster administration boundary**, while your workstation remains the infrastructure-authoring and automation machine.
+
+
+## Checklist
+
+- [ ] Deploy Prometheus and Grafana through GitOps.
+- [ ] Validate live scrape targets and a real PromQL query.
+- [ ] Deploy/validate Wazuh components and edge Wazuh Manager path.
+- [ ] Validate Suricata on `edge-01` with a fresh, authorised benign event.
+- [ ] Build Student Project Platform images through GitHub Actions and publish immutable GHCR tags/digests.
+- [ ] Deploy Student Project Platform through Argo CD.
+- [ ] Prove browser login/authenticated page works.
+- [ ] Prove PostgreSQL state survives application pod replacement.
+- [ ] Capture Week-3 evidence and merge through PR into `dev`.
+
+## 1. Know the three evidence planes
+
+Do not treat all dashboards as interchangeable:
 
 ```text
 Prometheus / Grafana
-    → operational metrics and resource health
+    operational metrics, capacity, health trends
 
 Wazuh
-    → host/security events and investigation
+    host/security events, integrity/authentication/investigation evidence
 
 Suricata
-    → network IDS evidence
+    network IDS/event evidence
 ```
 
-You will also deploy the small **Quantum Platform** web application stack:
+A good investigation may correlate all three.
 
-```text
-Astro user interface
-        ↓
-Django user API / authentication
-        ↓
-PostgreSQL
-```
+## 2. Prometheus and Grafana
 
-These are complementary systems. Grafana is not a replacement for Wazuh; Wazuh is not a replacement for Prometheus.
-
-# Checklist
-
-- [ ] Explain metrics, logs/events, alerts and traces at a high level.
-- [ ] Deploy Prometheus through the GitOps path.
-- [ ] Deploy Grafana and verify it queries the live Prometheus instance.
-- [ ] Validate node/Kubernetes metrics from actual targets.
-- [ ] Bring the edge Wazuh Manager into its intended Week 3 state.
-- [ ] Confirm Wazuh agents are enrolled with stable identities.
-- [ ] Deploy/validate the Wazuh Indexer and Dashboard in Kubernetes.
-- [ ] Deploy/validate Suricata on the edge path.
-- [ ] Generate one **benign, authorised, fresh** security event and trace the evidence path.
-- [ ] Clone/build/test the current `quantum-platform` source.
-- [ ] Deploy Quantum Platform through the infrastructure GitOps manifests.
-- [ ] Confirm PostgreSQL persistence.
-- [ ] Create a user/login session through the browser.
-- [ ] Verify HTTP health endpoints independently of the user-facing page.
-- [ ] Explain why a healthy Pod is not necessarily a healthy application.
-
-# 1. Operational telemetry: Prometheus and Grafana
-
-Prometheus periodically scrapes numeric metrics. Grafana queries and visualises them.
-
-```text
-metric endpoint
-     ↓ scrape
-Prometheus
-     ↓ PromQL
-Grafana
-```
-
-The key learning objective is not "install Grafana". It is:
-
-> **Prove that what Grafana displays corresponds to live metrics from the components you think you are observing.**
-
-After the upstream applications are reconciled:
+Desired state belongs under `gitops/` and is reconciled by Argo.
 
 ```bash
+# RUN ON: k8s-cp-01
 kubectl -n monitoring get pods,pvc,svc
 kubectl -n argocd get applications
 ```
 
-Query Prometheus directly before trusting a dashboard:
+Check the actual metric path, not merely pod status. Example:
 
 ```bash
-kubectl -n monitoring exec deploy/prometheus-server -c prometheus-server -- \
-  wget -qO- 'http://127.0.0.1:9090/api/v1/query?query=up'
+# RUN ON: k8s-cp-01
+kubectl -n monitoring exec deploy/prometheus-server -c prometheus-server --   wget -qO- 'http://127.0.0.1:9090/api/v1/query?query=up'
 ```
 
-Look for the actual target labels and job names in your deployment. Do not copy a PromQL query from a screenshot and assume your labels are identical.
-
-Useful questions:
-
-- Which targets are `up == 1`?
-- Which targets are missing?
-- How much CPU and memory are your worker nodes using?
-- What changes when you start/stop a test workload?
-- Does the graph time window actually include your experiment?
-
-# 2. Wazuh: host/security event evidence
-
-The reference architecture deliberately keeps the Wazuh Manager on `edge-01` while the Wazuh Indexer/Dashboard run in Kubernetes.
-
-Simplified path:
+A Grafana dashboard should be explainable in terms of:
 
 ```text
-VM Wazuh agent
-      ↓
-edge-01 Wazuh Manager
-      ↓
-alerts.json
-      ↓ Filebeat/TLS
-Wazuh Indexer in Kubernetes
-      ↓
-Wazuh Dashboard
+metric endpoint → Prometheus scrape → labels → PromQL → panel
 ```
 
-Why split it this way? The management/security sensor can keep collecting host evidence even if the Kubernetes application plane is unhealthy.
+Do not manually import a dashboard that GitOps claims to own.
 
-Use the upstream runbook as the detailed source:
+## 3. Wazuh
 
-```text
-infra-hpc-qc-k8s/docs/tutorials/wazuh-suricata-deployment.md
-infra-hpc-qc-k8s/docs/tutorials/wazuh-suricata-operational-drills.md
-```
+Your exact split follows the provided student scaffold; `edge-01` hosts the Wazuh Manager and Kubernetes may host index/dashboard components.
 
-First check the Manager locally on edge:
+Host-side validation:
 
 ```bash
-sudo systemctl status wazuh-manager --no-pager
+# RUN ON: edge-01
+systemctl is-active wazuh-manager
 sudo /var/ossec/bin/agent_control -l
-sudo tail -n 50 /var/ossec/logs/ossec.log
-sudo test -s /var/ossec/logs/alerts/alerts.json && echo 'alerts.json has events'
 ```
 
-Then validate Kubernetes components:
+Cluster-side validation:
 
 ```bash
+# RUN ON: k8s-cp-01
 kubectl -n wazuh get statefulset,deploy,pod,svc,pvc
-kubectl -n wazuh get events --sort-by=.lastTimestamp | tail -n 25
 ```
 
-Do not expose the Wazuh Indexer or administrative APIs publicly just to make testing convenient.
+Focus on **fresh evidence**. Historical errors from earlier setup are not proof of a current incident.
 
-# 3. Suricata: network IDS evidence
+## 4. Suricata
 
-Suricata examines network traffic and writes structured EVE JSON records.
-
-Reference path:
-
-```text
-edge network interface
-       ↓
-Suricata
-       ↓
-/var/log/suricata/eve.json
-       ↓
-Wazuh log collector / decoder / rules
-       ↓
-security investigation
-```
-
-Validate the service and fresh data:
+Suricata belongs on the network/security edge in this POC.
 
 ```bash
-sudo systemctl status suricata --no-pager
-sudo test -s /var/log/suricata/eve.json && echo 'eve.json has events'
+# RUN ON: edge-01
+systemctl is-active suricata
+sudo test -f /var/log/suricata/eve.json && echo 'eve.json exists'
 sudo tail -n 20 /var/log/suricata/eve.json
 ```
 
-> [!IMPORTANT]
-> Always use a **fresh time window** when proving a detection. Old alerts from yesterday are not evidence that today's configuration works.
+Generate only instructor-approved benign traffic inside your allocated environment. Record:
 
-# 4. Run one benign security drill
+- event start/end time;
+- source/target logical roles;
+- expected Suricata evidence;
+- corresponding Wazuh or operational evidence where applicable.
 
-Use an instructor-approved, harmless event that should produce observable evidence. The purpose is to prove the chain, not to perform a sophisticated attack.
+Security teams will deepen this in Week 5; all teams need the basic evidence path now.
 
-Record:
+## 5. Student Project Platform
 
-```text
-start timestamp
-source host
-expected event
-actual Wazuh evidence
-actual Suricata evidence (where applicable)
-Prometheus health context
-end timestamp
-```
-
-Then answer:
-
-- Which component first observed the event?
-- Which component stored the canonical security record?
-- Was there any delay?
-- Was the event visible in Grafana? If so, was that security evidence or only operational context?
-- What would be lost if Kubernetes were down?
-
-# 5. Quantum Platform: what you are deploying
-
-The `quantum-platform` repository separates the user experience from the backend business logic:
+The platform is intentionally small enough that you can understand it:
 
 ```text
-browser
-  ↓
-Astro users frontend
-  ↓ same-origin API/session path
-Django user API
-  ↓
+Browser
+   ↓
+Traefik/TLS
+   ↓
+Astro frontend
+   ↓
+small authenticated backend/API
+   ↓
 PostgreSQL
+   ↓
+Cinder-backed PVC
 ```
 
-Astro owns presentation. Django owns authentication/authorisation and application rules. PostgreSQL owns durable platform state.
+Its purpose is to teach containerisation, authentication, persistent application state, CI, GitOps and the Week-4 ACP integration—not to reproduce the full research portal.
 
-Clone and record the exact source revision:
-
-```bash
-cd ~/scc26
-git clone https://github.com/nyameko/quantum-platform.git
-cd quantum-platform
-git rev-parse HEAD
-```
-
-Read the project root README before deploying it. The application has moved quickly; use the instructor's tested baseline rather than combining arbitrary commits from different days.
-
-# 6. Build/test the application source
-
-Frontend checks from the repository root:
-
-```bash
-npm install
-npm run check
-npm run build
-```
-
-For the Django API, use the Python version and dependency instructions declared by the current repository. Typical checks include:
-
-```bash
-cd apps/user-api
-python -m venv .venv
-source .venv/bin/activate
-pip install -e .
-python manage.py check
-python manage.py makemigrations --check
-```
-
-Do not run the Django development server as your production deployment. The purpose of local/source checks is to fail early before publishing/deploying an image.
-
-# 7. Container images and immutable deployment
-
-The application repository builds OCI images for the frontend/backend components. Your Week 2 work already established the GitOps control plane.
-
-The deployment chain should be:
+Source/configuration lives under:
 
 ```text
-source commit
-    ↓ CI/build
-container image
-    ↓ preferably immutable SHA/digest reference
-infra Git desired state
-    ↓
+platform/
+gitops/resources/student-platform/
+```
+
+Read [`platform/README.md`](../platform/README.md) before editing it.
+
+## 6. Build images in GitHub, not as an unmanaged laptop artifact
+
+The preferred flow is:
+
+```text
+student source change
+      ↓ PR / GitHub
+GitHub Actions test/build
+      ↓
+GHCR immutable image
+      ↓
+GitOps image reference
+      ↓
 Argo CD
-    ↓
+      ↓
 Kubernetes
 ```
 
-Do not deploy a locally modified image under an ambiguous floating tag and then lose track of what code actually ran.
+Docker/Podman may be useful locally if you already know them, but they are not required to become another mandatory workstation administration dependency.
 
-# 8. Deploy Quantum Platform
+Record the image tag/digest used for the Week-3 accepted deployment.
 
-The Kubernetes desired state lives in `infra-hpc-qc-k8s`, under the Argo/Quantum Platform resources.
+## 7. Deploy and inspect from `k8s-cp-01`
 
-The student POC may reduce non-essential replicas, but preserve the key service boundaries:
-
-```text
-Astro users frontend
-Django user-api
-PostgreSQL
-Ingress / TLS
-persistent database volume
-```
-
-After sync:
+After the reviewed Git change is merged/synced:
 
 ```bash
-kubectl -n quantum-platform get deploy,statefulset,pod,svc,pvc,ingress
-kubectl -n argocd get application quantum-platform -o wide
+# RUN ON: k8s-cp-01
+kubectl -n student-platform get deploy,statefulset,pod,svc,pvc,ingress
+kubectl -n argocd get applications
 ```
 
-Check the API health endpoint through the service/ingress path used in your environment.
-
-Then use the browser. A successful Kubernetes rollout is not enough; test the actual user workflow.
-
-# 9. Browser acceptance
-
-At minimum:
+The browser acceptance test should prove:
 
 ```text
-1. Open the team Quantum Platform URL.
-2. Reach the user/login interface.
-3. Create or use the instructor-approved test account.
-4. Complete the available login/session flow.
-5. Open the authenticated dashboard/profile surface.
-6. Log out.
+DNS resolves
+TLS is valid for the intended access path
+frontend loads
+login succeeds
+backend is reachable
+PostgreSQL is reachable
+an authenticated page renders
 ```
 
-The exact account/verification workflow depends on the tested application baseline and environment email configuration. Do not weaken Django security settings merely to skip a step; document any lab-specific mail/verification mechanism.
+## 8. Persistence test
 
-# 10. Prove PostgreSQL persistence
-
-Find the PostgreSQL StatefulSet/PVC:
+Create a harmless test account/record, identify the application/API pod, delete that pod and allow Kubernetes to recreate it.
 
 ```bash
-kubectl -n quantum-platform get statefulset,pod,pvc
+# RUN ON: k8s-cp-01
+kubectl -n student-platform get pods
+kubectl -n student-platform delete pod <application-pod>
+kubectl -n student-platform get pods -w
 ```
 
-Create a known test record through the normal application workflow, then restart/delete the application/database Pod in the safe manner described by the deployment runbook. Confirm the record remains.
+Then confirm the record still exists. The objective is to demonstrate that application pods are replaceable while canonical state lives in PostgreSQL/Cinder.
 
-Again:
+Do **not** delete the PostgreSQL PVC during this test.
+
+## 9. Week-3 platform view
+
+A simple dashboard is enough:
 
 ```text
-persistent volume ≠ backup
+┌──────────────────────────────────────────┐
+│ SCC26 — Inference Fabric                     │
+│                                          │
+│ Welcome, <student>                       │
+│                                          │
+│ Platform                                 │
+│ ● Kubernetes                             │
+│ ● PostgreSQL                             │
+│ ● Prometheus                             │
+│                                          │
+│ Team                                     │
+│ <members / project>                      │
+│                                          │
+│ [ Profile ]                  [ Sign out ]│
+└──────────────────────────────────────────┘
 ```
 
-Your evidence is that routine Pod replacement does not erase the application database.
+Do not spend Week 3 building a huge UI. Working identity/state/deployment is more important than visual complexity.
 
-# Success state
-
-Required Week 3 evidence:
+## Exit gate
 
 ```text
-✓ Prometheus running with expected live targets
-✓ Grafana displays a query you independently verified in Prometheus
-✓ Wazuh Manager healthy on edge
-✓ intended Wazuh agents enrolled/active
-✓ Wazuh Indexer/Dashboard storage healthy
-✓ Suricata service healthy and fresh EVE data visible
-✓ one authorised benign event traced through the security evidence path
-✓ Quantum Platform images/source baseline recorded
-✓ Quantum Platform Pods/Services/PVC/Ingress healthy
-✓ browser login/session path works
-✓ PostgreSQL-backed state survives Pod replacement
-✓ no plaintext application/security secrets committed to Git
+[k8s-cp-01] Prometheus/Grafana running with live data
+[edge-01]    Wazuh Manager + active agents evidenced
+[edge-01]    Suricata produces a fresh authorised event
+[GitHub]     Student Platform image built/tested and pinned
+[Kubernetes] Student Platform + PostgreSQL deployed through Argo
+[Browser]    authenticated page works over the intended route
+[Persistence] state survives application-pod replacement
 ```
 
-# Troubleshooting mental model
-
-For observability:
-
-```text
-source emits metric?
-   ↓
-Prometheus target discovers/reaches it?
-   ↓
-query returns expected labels/data?
-   ↓
-Grafana query uses those labels?
-```
-
-For Wazuh:
-
-```text
-agent active?
-   ↓
-Manager receives/processes event?
-   ↓
-alert generated?
-   ↓
-Filebeat/indexer path healthy?
-   ↓
-Dashboard query/time window correct?
-```
-
-For Quantum Platform:
-
-```text
-image correct?
-   ↓
-Pod Ready?
-   ↓
-Service endpoints?
-   ↓
-Ingress/TLS?
-   ↓
-Django health?
-   ↓
-PostgreSQL reachable?
-   ↓
-browser auth/session workflow?
-```
-
-# Deliverable
-
-Commit a Week 3 record containing:
-
-- screenshot/query evidence for one live Grafana metric;
-- Wazuh agent inventory evidence with sensitive details redacted;
-- benign event timeline and Wazuh/Suricata evidence references;
-- Quantum Platform deployment revision/image references;
-- browser acceptance evidence;
-- persistence test result;
-- one example where `Argo Healthy` or `Pod Ready` did **not** by itself prove the user experience.
-
-# Next week
-
-Week 4 connects Quantum Platform to a bounded Agent Control Plane and a persistent Hermes worker. The worker runs on your Kubernetes CPU resources but makes inference calls to separately provided A100/H200 model endpoints.
+Next week the Student Project Platform becomes a client of Agent Control Plane.
