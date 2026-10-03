@@ -1,271 +1,295 @@
-# Open LLM Inference Fabric — Ollama, llama.cpp & vLLM on CPU/GPU
+Open LLM Inference Fabric — Ollama, llama.cpp & vLLM on CPU/GPU
+===============================================================
 
-**Repository:** `inference-fabric-scc26`  
-**Recommended long name:** **Open LLM Inference Fabric: Ollama, llama.cpp & vLLM on CPU/GPU**  
-**Duration:** 10-week core, 12 weeks with stretch/handover
+Welcome. This repository is one of the CHPC student engineering projects for the 2026 SCC follow-on programme. You will spend the first four weeks building the same small cloud-native research platform as the other teams, then use that platform for your team's project-specific experiment.
 
-## Project summary
+The project is intentionally ambitious, but the path is deliberately staged. **Do not try to understand every technology before you begin.** Build one layer, validate it, understand what it owns, then continue.
 
-This project goes underneath Hermes and studies the model-serving substrate itself. Students deploy and benchmark **Ollama**, **llama.cpp** and **vLLM** across the available execution classes—CPU nodes and, where allocated, A100/H200 GPU resources—then build an evidence-based routing catalogue that `agent-control-plane` can consume later.
+> [!IMPORTANT]
+> The objective is not to copy commands until something turns green. By the end, every team member should be able to explain the full platform at a useful high level, even though each person has a primary role.
 
-The goal is not to declare one runtime universally “best”. Each runtime solves a different operational problem. Students must discover and document the boundaries empirically:
+# Project question
 
-- ease of deployment and model management;
-- supported model formats and quantisation paths;
-- CPU/GPU portability;
-- throughput and latency under concurrency;
-- VRAM/RAM behaviour and context-length pressure;
-- multi-GPU and distributed-serving capabilities;
-- observability and failure recovery;
-- suitability for interactive Hermes agents versus high-throughput shared services.
+> Given a model, runtime, hardware class and service objective, what measured evidence should the platform use to choose an inference route?
 
-## Core question
+# Start here
 
-> Given a model, hardware class and service objective, what measurable evidence should the platform use to choose an inference runtime and resource placement?
+Work through the common platform weeks in order:
 
-## Primary integrations
+1. [Week 1 — OpenStack → Terraform → Ansible](week1/README.md)
+2. [Week 2 — Kubernetes Substrate & GitOps](week2/README.md)
+3. [Week 3 — Observability, Security & Quantum Platform](week3/README.md)
+4. [Week 4 — Agent Control Plane & Hermes](week4/README.md)
+5. **Week 5 — project-specific implementation**
+6. **Week 6 — technical journal article, poster and reproducibility rebuild**
+7. **Week 7 — consolidation, cleanup and upstream handover**
 
-- `infra-hpc-qc-k8s` — Kubernetes/GPU deployment, scheduling, storage and telemetry;
-- `agent-control-plane` — model catalogue, execution classes and future routing decisions;
-- Hermes — representative interactive agent workload;
-- `quantum-platform` — optional administrative view of model endpoints and health.
+The upstream implementation/reference repositories are:
 
-## Learning outcomes
+- [`nyameko/infra-hpc-qc-k8s`](https://github.com/nyameko/infra-hpc-qc-k8s) — OpenStack/Terraform, Ansible, Kubernetes, GitOps, storage, observability and security deployment;
+- [`nyameko/quantum-platform`](https://github.com/nyameko/quantum-platform) — Astro/Django/PostgreSQL user-facing platform;
+- [`nyameko/agent-control-plane`](https://github.com/nyameko/agent-control-plane) — bounded agent task API, persistent history and Hermes worker;
+- [`chpc-tech-eval/scc`](https://github.com/chpc-tech-eval/scc) — teaching/tutorial style and HPC learning lineage.
 
-Students should be able to:
+These repositories are active. Record the exact commit SHA you use each week. When a tested baseline is announced, keep the whole team on that baseline until instructed otherwise.
 
-- explain model serving separately from agent orchestration;
-- deploy the same logical model behind multiple inference APIs;
-- reason about quantisation, VRAM, KV cache and context length;
-- benchmark TTFT, inter-token latency, throughput and concurrency;
-- use Kubernetes resource requests/limits, node labels and affinity for placement;
-- compare CPU and GPU execution honestly;
-- collect GPU/CPU telemetry alongside application metrics;
-- design a runtime-neutral model endpoint catalogue;
-- identify when a runtime feature matters operationally rather than only theoretically.
+# Programme cadence
 
-## Scope
+The current plan is a **six-week core project** followed by **Week 7 consolidation**. Team captains should coordinate the Friday working session, tentatively **14:00–18:00**, through the programme Discord. The current expected infrastructure access window runs through **15 December 2026**; watch GitHub/Discord for any operational changes.
 
-### Must deliver
+Discord: https://discord.gg/PNMknPydJ
 
-1. Reproducible deployment of Ollama.
-2. Reproducible deployment of `llama.cpp` server.
-3. Reproducible deployment of vLLM.
-4. At least one common model/workload that can be compared fairly across all compatible runtimes.
-5. CPU baseline for at least Ollama and `llama.cpp` where practical.
-6. GPU baseline on at least one allocated NVIDIA GPU class.
-7. Benchmark harness producing machine-readable results.
-8. Prometheus-compatible metrics or an exporter/collector path for request and resource telemetry.
-9. Kubernetes scheduling manifests showing explicit resource placement.
-10. A runtime/model/execution-class catalogue suitable for later `agent-control-plane` dry-run routing.
+# What you will build
 
-### Should deliver
+The common platform is approximately:
 
-- A100 vs H200 comparison where resource allocations permit;
-- multiple quantisation/precision variants;
-- concurrent interactive-agent load versus batch throughput load;
-- graceful model-server health/readiness handling;
-- a Hermes profile that can switch between approved inference endpoints without changing agent identity/state;
-- cost/resource-efficiency metric such as tokens/s per GPU or tokens/s per GB VRAM.
+| Role | vCPU | RAM | Storage | Purpose |
+| --- | ---: | ---: | ---: | --- |
+| `edge-01` | 4 | 10 GiB | 50 GiB | WireGuard, Pi-hole/DNS, nftables, Wazuh Manager, Suricata |
+| `api-lb-01` | 2 | 4 GiB | 25 GiB | HAProxy and stable Kubernetes API endpoint |
+| `k8s-cp-01` | 4 | 8 GiB | 30 GiB | Kubernetes control plane |
+| `k8s-worker-01` | 8 | 16 GiB | 40 GiB | platform/workbench/project workloads |
+| `k8s-worker-02` | 8 | 16 GiB | 40 GiB | platform/workbench/project workloads |
+| **POC total** | **26** | **54 GiB** | **185 GiB** | excluding separately allocated GPU systems |
 
-### Stretch
+Your team may adjust the final design within the project quota, but every change needs a technical reason.
 
-- multi-GPU vLLM deployment;
-- `llama.cpp` multi-GPU experiments;
-- AMD ROCm experiment on available hardware;
-- Kubernetes LeaderWorkerSet/Ray or another reviewed distributed-serving mechanism;
-- control-plane routing policy that recommends an execution class in dry-run mode based on benchmark evidence.
-
-## Non-goals
-
-- training foundation models;
-- fine-tuning as a core deliverable;
-- declaring a universal winner;
-- letting the control plane schedule expensive jobs autonomously before evidence/policy is reviewed;
-- benchmarking different models and then attributing differences to serving runtimes.
-
-## Architecture
+## Common architecture
 
 ```text
-                          Hermes / test clients
-                                  │
-                       OpenAI-compatible requests
-                                  │
-                ┌─────────────────┼─────────────────┐
-                │                 │                 │
-              Ollama          llama.cpp            vLLM
-                │                 │                 │
-          model/runtime      model/runtime      model/runtime
-                │                 │                 │
-                └────────────── Kubernetes ─────────┘
-                                  │
-                    ┌─────────────┼─────────────┐
-                    │             │             │
-                   CPU           A100          H200
-                    │             │             │
-                    └──── resource telemetry ───┘
-                                  │
-                         benchmark/result store
-                                  │
-                         agent-control-plane
-                         catalogue / dry-run
+                              Your workstation
+                                    │
+                                    │ WireGuard / SSH
+                                    ▼
+                              ┌───────────┐
+                              │  edge-01  │
+                              │ VPN / DNS │
+                              │ security  │
+                              └─────┬─────┘
+                                    │
+                  ┌─────────────────┴──────────────────┐
+                  │                                    │
+                  ▼                                    ▼
+            ┌───────────┐                       ┌─────────────┐
+            │ api-lb-01 │                       │ Kubernetes  │
+            │  HAProxy  │                       │   cluster   │
+            └─────┬─────┘                       └──────┬──────┘
+                  │                                    │
+                  │ :6443                       ┌──────┴──────┐
+                  └────────────────────────────►│ k8s-cp-01  │
+                                               └──────┬──────┘
+                                                      │
+                                             ┌────────┴────────┐
+                                             ▼                 ▼
+                                      ┌─────────────┐   ┌─────────────┐
+                                      │k8s-worker-01│   │k8s-worker-02│
+                                      └─────────────┘   └─────────────┘
 ```
 
-## Benchmark methodology
 
-A valid comparison keeps the following as constant as possible:
+A100 and H200 access is **separate** from the Sebowa OpenStack project. The normal design is for small services/agents in Kubernetes to call approved model endpoints remotely.
 
-- model family and model content;
-- prompt corpus;
-- output token targets;
-- context length;
-- concurrency level;
-- warm/cold-start definition;
-- hardware allocation;
-- precision/quantisation category when supported;
-- request API semantics.
+# Why the first four weeks are shared
 
-Record at least:
+All four projects depend on the same engineering foundations. The common build teaches the control boundaries once:
 
-- time to first token (TTFT), p50/p95;
-- inter-token latency or tokens/second;
-- end-to-end request latency, p50/p95;
-- aggregate throughput under concurrency;
-- CPU utilisation;
-- RAM usage;
-- GPU utilisation;
-- VRAM usage;
-- model load/start time;
-- error/OOM/retry count;
-- model, runtime and image versions.
-
-## Runtime hypotheses to test
-
-These are hypotheses, not predetermined conclusions:
-
-### Ollama
-Likely strong for simple model lifecycle and developer ergonomics. Students should test how well those conveniences translate into multi-user/Kubernetes operations.
-
-### llama.cpp
-Designed for broad hardware portability, quantised inference and CPU/GPU flexibility. Students should test how its deployment simplicity, GGUF ecosystem and CPU/GPU offload compare with the other runtimes.
-
-### vLLM
-Designed for high-throughput model serving and sophisticated GPU scheduling/batching. Students should test whether its throughput advantages matter for shared Hermes services and what operational complexity accompanies them.
-
-## Runtime-neutral catalogue
-
-A project outcome should resemble:
-
-```yaml
-models:
-  - id: example-model
-    logical_name: example-model
-    endpoints:
-      - runtime: llama.cpp
-        execution_class: cpu-large
-        endpoint_ref: llama-example-cpu
-        measured:
-          ttft_p50_ms: 0
-          tokens_per_second: 0
-      - runtime: vllm
-        execution_class: h200-single
-        endpoint_ref: vllm-example-h200
-        measured:
-          ttft_p50_ms: 0
-          tokens_per_second: 0
+```text
+Terraform       → OpenStack infrastructure
+Ansible         → Linux host configuration/bootstrap
+kubeadm         → Kubernetes bootstrap
+Cilium          → Kubernetes networking/policy
+Cinder CSI      → Kubernetes persistent block storage
+Argo CD         → long-lived Kubernetes application state
+Sealed Secrets  → encrypted secret material in GitOps
+Traefik         → application ingress
+Prometheus      → metrics collection
+Grafana         → metrics visualisation
+Wazuh           → host/security event evidence
+Suricata        → network IDS evidence
+Quantum Platform→ user identity/product surface
+Agent Control Plane → bounded agent tasks/history/policy
+Hermes          → agent runtime/harness
+A100/H200 model server → inference
 ```
 
-The control plane should refer to logical endpoint IDs, not embed cluster credentials or raw secrets.
+If you do not know a term yet, that is expected. The weekly tutorials introduce it when you need it.
 
-## Repository layout
+# Six-week core + Week 7 consolidation
+
+| Week | Common goal | Exit condition |
+| --- | --- | --- |
+| 1 | OpenStack → Terraform → Ansible | five-node POC reproducibly deployed and bootstrapped |
+| 2 | Kubernetes substrate + GitOps | 1 CP + 2 workers, Cilium, Cinder, Argo, Sealed Secrets, Traefik/TLS |
+| 3 | Observability/security + Quantum Platform | Prometheus/Grafana, Wazuh/Suricata evidence and working browser login |
+| 4 | ACP + Hermes | portal → ACP → evidence → Hermes → remote model round trip |
+| 5 | Project specialisation | project-specific MVP demonstrated on the common platform |
+| 6 | Report + reproducibility | 2-page technical journal article, poster and tear-down/rebuild evidence |
+| 7 | Consolidation | cleanup, final fixes, documented handover and upstream-ready contributions |
+
+### Week 5 — Inference Fabric experiments
+
+Your common platform becomes the client, telemetry and orchestration environment for a controlled inference study. You will compare **Ollama**, **llama.cpp** and **vLLM** across CPU and the separately allocated A100/H200 resources where compatible.
+
+Keep the scientific comparison fair: use the same logical model or the closest compatible representation, the same prompt corpus, comparable generation settings and clearly recorded hardware allocations.
+
+Required Week 5 outcomes:
+
+- CPU baseline for Ollama and/or llama.cpp;
+- at least one A100 or H200 GPU baseline;
+- vLLM deployment on a compatible NVIDIA resource;
+- machine-readable measurement of latency, throughput and resource usage;
+- Prometheus/Grafana visibility of the client/platform side and available inference telemetry;
+- an ACP/Hermes configuration that can call at least one approved remote endpoint;
+- a short evidence-based explanation of when each runtime is useful.
+
+Do **not** try to crown a universal winner. Your result must be conditional on workload, model, hardware and service objective.
+
+
+# Week 6 — report, poster and reproducibility
+
+Your final Week 6 assessment is **not** "our environment has been alive for six weeks." You must demonstrate that the project is reproducible.
+
+At minimum:
+
+1. preserve the required state/results and record the exact source/image revisions;
+2. tear down the disposable infrastructure using the documented method;
+3. recreate the common platform from your Terraform/Ansible/GitOps sources and protected environment inputs;
+4. rerun the core acceptance checks;
+5. rerun the project-specific MVP or a representative reproducibility test;
+6. record failures, manual exceptions and time-consuming steps honestly.
+
+You will prepare:
+
+- a **two-page technical journal-style article**;
+- a **project poster**;
+- a short live demonstration;
+- reproducibility evidence.
+
+The article/poster should answer: problem, architecture, method, evidence/results, limitations, lessons learned and future work.
+
+# Week 7 — consolidation
+
+Use the consolidation week to:
+
+- fix documentation discovered to be incomplete during the rebuild;
+- clean secrets/test credentials and stale resources;
+- turn useful project changes into clear commits/PRs;
+- identify improvements that belong upstream in `infra-hpc-qc-k8s`, `quantum-platform` or `agent-control-plane`;
+- freeze final results and architecture diagrams;
+- make the repository understandable to the next student who did not attend your meetings.
+
+# Team roles
+
+There are four students per team. Use the following primary ownership areas to parallelise the work:
+
+| Role | Primary responsibility |
+| --- | --- |
+| **Infrastructure deployment** | OpenStack, Terraform, networking, security groups, DNS/firewall design |
+| **Cloud automation** | Ansible, Kubernetes, Cilium, Cinder |
+| **CI/CD, telemetry & security** | Argo CD, CI, Prometheus/Grafana, Wazuh, Suricata |
+| **Frontend, agents & specialisation** | Astro/Quantum Platform, ACP, Hermes and project-specific implementation |
+
+These are **not silos**. Rotate ownership after major milestones and review one another's work. Any team member may be asked to explain any part of the final architecture.
+
+# Working method
+
+Use the same pattern every week:
+
+```text
+READ
+  ↓
+DESIGN
+  ↓
+DEPLOY
+  ↓
+VERIFY
+  ↓
+BREAK / OBSERVE
+  ↓
+FIX
+  ↓
+DOCUMENT
+  ↓
+COMMIT
+```
+
+A command completing without an error is not proof that the system works. Prefer end-to-end acceptance evidence.
+
+> [!TIP]
+> **Show the working system, not slides about the working system.** Screenshots and diagrams are useful evidence, but they do not replace a live command, request, query or reproducible run.
+
+# Git workflow
+
+Keep changes small and reviewable. A simple student flow is:
+
+```text
+feature/<short-topic>
+        ↓ Pull Request
+      main
+```
+
+Use issues for tasks/bugs and pull requests for reviewed changes. Do not store secrets in issue comments, Discord, screenshots or Git history.
+
+Before pushing:
+
+```bash
+git status
+git diff --cached
+```
+
+Commit messages should say what changed and why.
+
+# Secrets and safety
+
+Never commit:
+
+- OpenStack credentials/application-credential secrets;
+- private SSH or WireGuard keys;
+- kubeconfigs;
+- plaintext Kubernetes Secrets;
+- database passwords;
+- model API keys;
+- Discord bot tokens;
+- TLS private keys.
+
+Use the approved private-variable/Vault/Sealed Secret workflow described in the weekly guides.
+
+A useful project layout after the common deployment is:
 
 ```text
 inference-fabric-scc26/
 ├── README.md
-├── docs/
-│   ├── ARCHITECTURE.md
-│   ├── BENCHMARK-METHODOLOGY.md
-│   ├── MODEL-CATALOGUE.md
-│   └── OPERATIONS.md
+├── week1/ ... week4/
 ├── deploy/
 │   ├── ollama/
 │   ├── llama-cpp/
 │   └── vllm/
 ├── benchmarks/
-│   ├── prompts/
-│   ├── harness/
-│   └── schemas/
-├── catalog/
+├── results/
 ├── dashboards/
-├── tests/
-└── .github/workflows/
+└── reports/
 ```
 
-## Ten-week roadmap
+Benchmark results should record versions, model identity, hardware allocation and test parameters. Never commit API keys or provider credentials.
 
-### Week 1 — Baseline and methodology
 
-- choose one fair comparison model/workload;
-- define benchmark schema;
-- establish CPU and GPU execution classes;
-- create simple client load generator.
+# Final project deliverable
 
-### Week 2 — Ollama
+A reproducible CPU/GPU inference comparison with pinned runtime/model information, measurable latency/throughput/resource evidence and an endpoint catalogue usable by Agent Control Plane experiments.
 
-Deploy, instrument and benchmark one baseline. Document model lifecycle, storage and health behaviour.
+# Getting help
 
-### Week 3 — llama.cpp
+Use your project repository for technical issues and decisions, and the programme Discord for collaborative teaching/discussion. When asking for help, include:
 
-Deploy equivalent model/quantisation where possible. Benchmark and document CPU/GPU device behaviour.
+```text
+what you expected
+what actually happened
+the exact command/request
+relevant error/log excerpt
+which layer you already checked
+source commit(s) in use
+```
 
-### Week 4 — vLLM
+Redact credentials and private infrastructure values.
 
-Deploy GPU baseline. Validate batching/concurrency and readiness behaviour.
-
-### Week 5 — Fair comparison suite
-
-Run controlled benchmarks across compatible configurations. Produce first comparative report; identify invalid comparisons and rerun them rather than hiding them.
-
-### Week 6 — Kubernetes scheduling
-
-- node labels/affinity;
-- GPU requests;
-- resource limits;
-- placement failures;
-- model storage lifecycle;
-- safe rolling restart/update.
-
-### Week 7 — Hermes integration
-
-One persistent Hermes profile uses a runtime-neutral endpoint configuration. Demonstrate inference backend changes without losing the agent's platform identity or control-plane audit semantics.
-
-### Week 8 — Concurrency and failure
-
-- multiple simultaneous sessions;
-- context pressure;
-- OOM behaviour;
-- runtime restart;
-- unavailable GPU node;
-- metrics and alerts.
-
-### Week 9 — Staging catalogue
-
-Freeze `stag`, generate the model/runtime/execution-class catalogue from accepted benchmark evidence and test a dry-run routing query.
-
-### Week 10 — Final demo
-
-Serve the same representative workload through the three runtimes, show benchmark evidence and telemetry, explain appropriate use cases and limitations, and demonstrate that routing recommendations are evidence-driven rather than hard-coded preference.
-
-### Weeks 11–12 — Stretch
-
-Multi-GPU/distributed serving, ROCm portability, richer routing policy and upstream integration.
-
-## Acceptance criteria
-
-The team must provide a repeatable benchmark run for each core runtime, machine-readable evidence, exact image/runtime/model versions, resource telemetry and a technically defensible explanation of when each runtime is appropriate. The conclusion must be workload- and hardware-specific rather than a universal ranking.
-
-## Upstream contribution targets
-
-- `infra-hpc-qc-k8s`: reusable inference deployment patterns, GPU scheduling and dashboards;
-- `agent-control-plane`: model endpoint/execution-class catalogue and dry-run routing contract;
-- `quantum-platform`: optional endpoint health/admin visibility.
+Most importantly: **Keep Calm and Carry On.** The purpose is to learn how the layers fit together, not to already know them on day one.
