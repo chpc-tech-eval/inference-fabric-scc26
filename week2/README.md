@@ -1,423 +1,284 @@
-Week 2: Kubernetes Substrate & GitOps
-========================================
+# Week 2 — Kubernetes Substrate & GitOps
 
-Week 1 created and configured the virtual machines. This week you build the **platform substrate** that will run the rest of the project.
+Week 2 turns the verified Linux VMs into a small Kubernetes platform and then moves persistent application management into GitOps.
 
-The ownership chain becomes:
+# Where commands run
 
-```text
-Terraform      → OpenStack resources
-Ansible        → host/bootstrap configuration
-kubeadm        → Kubernetes cluster
-Cilium         → pod networking and network policy
-Cinder CSI     → persistent Kubernetes block storage
-Argo CD        → long-lived Kubernetes desired state
-Sealed Secrets → encrypted secret material safe to reconcile from Git
-Traefik        → HTTP/HTTPS application ingress
-cert-manager   → TLS certificates
-```
+This programme has a deliberately strict administration boundary. **Do not install or use `kubectl` or the Argo CD CLI on your personal workstation for this project.**
 
-The most important idea of this week is that each tool has a boundary. Do not make Terraform deploy applications, and do not use `kubectl edit` as a permanent replacement for GitOps.
-
-# Checklist
-
-- [ ] Explain the Kubernetes control plane, worker, Pod, Deployment, Service, Namespace and Ingress concepts.
-- [ ] Verify all five Week 1 VMs are healthy before changing them.
-- [ ] Install Kubernetes prerequisites/containerd through the upstream Ansible path.
-- [ ] Initialise `k8s-cp-01` through the stable HAProxy API endpoint.
-- [ ] Join both workers.
-- [ ] Confirm all nodes are `Ready`.
-- [ ] Install/validate Cilium.
-- [ ] Run a Cilium connectivity test and understand what it proves.
-- [ ] Install/configure OpenStack cloud integration and Cinder CSI using the upstream GitOps path.
-- [ ] Dynamically provision and mount a Cinder PVC.
-- [ ] Install Argo CD with Ansible.
-- [ ] Install Sealed Secrets and understand the plaintext → sealed → runtime Secret flow.
-- [ ] Deploy Traefik through Argo CD.
-- [ ] Deploy a simple test application through Git, not an imperative long-term `kubectl` command.
-- [ ] Obtain/validate TLS for a team hostname or instructor-provided test hostname.
-- [ ] Prove that `Synced`, `Healthy` and `reachable by a user` are three different checks.
-
-# 1. Kubernetes in plain language
-
-Kubernetes schedules containerised workloads across a set of machines.
-
-For this POC:
-
-```text
-api-lb-01
-    │ stable :6443 endpoint
-    ▼
-k8s-cp-01
-    │ control plane
-    ├──────────────────────┐
-    ▼                      ▼
-k8s-worker-01        k8s-worker-02
-```
-
-Important objects:
-
-| Object | Meaning |
+| Location | Tools / responsibilities |
 | --- | --- |
-| Node | A machine participating in the cluster |
-| Pod | Smallest scheduled Kubernetes workload unit |
-| Deployment | Controller that maintains a desired number of stateless Pods |
-| StatefulSet | Controller for workloads that need stable identity/storage semantics |
-| Service | Stable virtual endpoint in front of Pods |
-| Namespace | Logical grouping/boundary for Kubernetes objects |
-| ConfigMap | Non-secret configuration data |
-| Secret | Sensitive runtime data; still requires careful access control |
-| PVC | Request for persistent storage |
-| Ingress | HTTP/HTTPS routing request into a Service |
-| NetworkPolicy | Rules governing Pod network communication |
+| **Your workstation / laptop / desktop** | Git, SSH, OpenStack CLI, Terraform, Ansible and `kubeseal` |
+| **GitHub** | source control, pull requests, CI, container builds, GHCR images and GitOps desired state |
+| **`edge-01`** | WireGuard, Pi-hole/DNS, nftables, Wazuh Manager, Suricata and edge troubleshooting |
+| **`api-lb-01`** | HAProxy and API-endpoint troubleshooting |
+| **`k8s-cp-01`** | `kubectl`, Cilium CLI, Kubernetes bootstrap/diagnostics and any optional Argo CD CLI use |
+| **Kubernetes** | Argo CD, Cinder CSI, Traefik, cert-manager, Prometheus/Grafana, Wazuh components, Student Project Platform, ACP and Hermes |
+| **A100/H200 systems** | separately authorised model serving or project-specific GPU experiments |
 
-# 2. Preflight
-
-Before Kubernetes:
+A command block in these tutorials is prefixed with its execution location. For example:
 
 ```bash
-cd ~/scc26/infra-hpc-qc-k8s/ansible
-ansible all -i inventories/private/hosts.yml -m ping
+# RUN ON: WORKSTATION
+terraform plan
 ```
 
-Confirm time, DNS and package access on all Kubernetes hosts. Kubernetes failures caused by broken DNS or clock skew are much harder to understand later.
-
-Check the API LB configuration:
+or:
 
 ```bash
-ssh <api-lb-host>
-sudo systemctl is-active haproxy
-sudo ss -lntp | grep 6443
+# RUN ON: k8s-cp-01
+kubectl get nodes
 ```
 
-# 3. Build the cluster with the upstream Ansible roles
+The objective is to keep Kubernetes credentials and cluster administration **inside the cluster administration boundary**, while your workstation remains the infrastructure-authoring and automation machine.
 
-The upstream `kubernetes.yml` playbook initialises `k8s-cp-01` and joins the hosts in the `workers` group. Your student inventory deliberately contains only one control plane.
 
-Run the appropriate Kubernetes prerequisite/bootstrap path documented by the current upstream repository, then:
+## The most important boundary this week
 
-```bash
-ansible-playbook \
-  -i inventories/private/hosts.yml \
-  playbooks/kubernetes.yml
+```text
+WORKSTATION
+  Ansible + Git + kubeseal
+      │
+      ├── bootstrap/configure hosts
+      └── push desired state
+
+k8s-cp-01
+  kubectl + Cilium CLI + bootstrap diagnostics
+      │
+      ▼
+Kubernetes
+  Argo CD reconciles Git
 ```
 
-Run `kubectl` from the control-plane node (or from a deliberately configured admin workstation):
+**Do not install/use local `kubectl` for this project.** The kubeconfig/admin context stays on `k8s-cp-01`.
+
+## Checklist
+
+- [ ] Bootstrap one control plane and two workers using the provided automation.
+- [ ] Validate Kubernetes readiness from `k8s-cp-01`.
+- [ ] Install/validate Cilium networking.
+- [ ] Install/validate OpenStack Cinder CSI and a dynamic PVC.
+- [ ] Bootstrap Argo CD in-cluster.
+- [ ] Point an Argo root/application at this team's repository `gitops/` path.
+- [ ] Install Sealed Secrets; export only its **public certificate** for workstation `kubeseal` use.
+- [ ] Deploy a small application through Git → Argo, not by maintaining imperative YAML manually.
+- [ ] Establish Traefik/cert-manager/TLS as provided for the student environment.
+- [ ] Merge the validated Week-2 PR into `dev`.
+
+## 1. Bootstrap Kubernetes with Ansible
+
+Host preparation/bootstrap begins from the workstation:
 
 ```bash
+# RUN ON: WORKSTATION
+cd infrastructure/ansible
+ansible-playbook -i inventories/private/hosts.yml playbooks/kubernetes-prereqs.yml
+ansible-playbook -i inventories/private/hosts.yml playbooks/kubernetes.yml
+```
+
+The exact split may change as the scaffold improves. The important point is that Ansible remains the host/bootstrap automation layer.
+
+## 2. Kubernetes administration begins on `k8s-cp-01`
+
+```bash
+# RUN ON: WORKSTATION
+ssh <k8s-cp-01>
+```
+
+Then:
+
+```bash
+# RUN ON: k8s-cp-01
 kubectl get nodes -o wide
 kubectl get pods -A
 kubectl get --raw='/readyz?verbose'
 ```
 
-Expected POC nodes:
+Expected topology:
 
 ```text
-k8s-cp-01
-k8s-worker-01
-k8s-worker-02
+k8s-cp-01       Ready   control-plane
+k8s-worker-01   Ready
+k8s-worker-02   Ready
 ```
 
-> [!IMPORTANT]
-> `kubectl get nodes` is not a complete acceptance test. It tells you that nodes registered and currently report a status. You still need networking, storage and application-level checks.
+`kubectl get nodes` is not the final acceptance test. It proves registration/readiness at one level only.
 
-# 4. Cilium: the Kubernetes network
+## 3. Cilium
 
-A Pod must be able to communicate according to cluster and policy rules even when it moves between worker nodes. Cilium provides the CNI/network dataplane in the reference platform.
-
-After the upstream Cilium application/configuration is installed, check:
+Cilium supplies pod networking and network-policy capability.
 
 ```bash
+# RUN ON: k8s-cp-01
 cilium status --wait
 kubectl -n kube-system get pods -l k8s-app=cilium -o wide
 ```
 
-Then run the connectivity test:
+Run the connectivity test if it is part of the supplied baseline:
 
 ```bash
-cilium connectivity test --debug
+# RUN ON: k8s-cp-01
+cilium connectivity test
 ```
 
-A connectivity test is valuable because it tests real Pod/service network paths. If it fails, do not immediately change Cilium configuration. Work through:
+If Cilium is unhealthy, investigate before deploying more applications. Cloud security-group mistakes can look like CNI failures.
 
-```text
-OpenStack SGs
-    ↓
-node routing
-    ↓
-required Kubernetes ports
-    ↓
-Cilium agent health
-    ↓
-pod/service path
-```
+## 4. Cinder CSI and persistent storage
 
-A healthy Cilium status alone does not prove every NodePort, Ingress or external path works.
-
-# 5. Persistent storage with Cinder CSI
-
-Pods are disposable. Databases and durable application state are not.
-
-OpenStack Cinder provides block volumes; the Cinder CSI driver allows Kubernetes to request and attach them through a `StorageClass` and `PersistentVolumeClaim`.
-
-Conceptually:
-
-```text
-Pod
- ↓ mounts
-PVC
- ↓ binds
-PV
- ↓ implemented by
-Cinder CSI
- ↓ creates/attaches
-OpenStack Cinder volume
-```
-
-Follow the upstream Cinder/Argo path for your cloud. Then inspect:
+Cinder CSI allows Kubernetes PVCs to become OpenStack block volumes.
 
 ```bash
+# RUN ON: k8s-cp-01
 kubectl get storageclass
 kubectl get pods -A | grep -i cinder
 ```
 
-Create a small test PVC using the StorageClass available in your environment, for example:
+Create a small PVC test manifest in **Git** under an appropriate test/evidence path. After review/temporary apply for the storage exercise, prove:
 
-```yaml
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: week2-storage-test
-spec:
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: <YOUR-CINDER-STORAGECLASS>
-  resources:
-    requests:
-      storage: 1Gi
-```
+- claim becomes `Bound`;
+- a pod can write data;
+- deleting/recreating the pod preserves that data;
+- you can identify the corresponding OpenStack volume.
 
-Apply it for the test:
+Inspect with:
 
 ```bash
-kubectl apply -f week2-storage-test.yaml
-kubectl get pvc week2-storage-test
+# RUN ON: k8s-cp-01
+kubectl get pvc -A
+kubectl get pv
 ```
 
-Use a temporary Pod to write a file, delete the Pod, recreate it with the same claim and prove the file still exists.
-
-> [!NOTE]
-> Persistence is not the same thing as backup. A Cinder PVC surviving a Pod restart does not prove that you can recover from accidental data deletion, a broken database or loss of the volume.
-
-# 6. Argo CD: the GitOps boundary
-
-The reference repository uses Ansible to bootstrap Argo CD and Sealed Secrets:
+Use the workstation only for cloud-side confirmation:
 
 ```bash
-ansible-playbook \
-  -i inventories/private/hosts.yml \
-  playbooks/argocd.yml
+# RUN ON: WORKSTATION
+openstack volume list
 ```
 
-Once Argo exists, long-lived Kubernetes applications should normally follow:
+## 5. Bootstrap Argo CD, then let Git take over
 
-```text
-Git commit
-   ↓
-Argo CD
-   ↓
-render desired state
-   ↓
-compare with live cluster
-   ↓
-sync/reconcile
-   ↓
-Kubernetes
-```
-
-The rule for this project is:
-
-> **Use imperative `kubectl` commands to inspect, test and diagnose. Put permanent desired-state changes in Git and let Argo reconcile them.**
-
-Useful checks:
+The first Argo installation/root application is a bootstrap operation performed from `k8s-cp-01`. After that, long-lived application state should come from this repository.
 
 ```bash
+# RUN ON: k8s-cp-01
 kubectl -n argocd get pods
 kubectl -n argocd get applications
 ```
 
-Learn the distinction:
+The normal steady-state workflow is:
 
 ```text
-Synced   = live resources match the desired Git revision
-Healthy  = Argo's health assessment considers the resources healthy
-Reachable = an end user can actually use the service end-to-end
+WORKSTATION: edit/commit/push
+          ↓
+GITHUB: reviewed desired state
+          ↓
+ARGO CD IN KUBERNETES
+          ↓
+cluster reconciles
 ```
 
-You need all three forms of evidence.
+Use `kubectl` to inspect/test/diagnose. Repair permanent state in Git rather than `kubectl edit`.
 
-# 7. Sealed Secrets
+## 6. One GitOps repository: this one
 
-A normal Kubernetes Secret manifest is only base64-encoded, not safe to publish as a credential store.
-
-The reference flow is:
+Argo does not need a separate student repository. Use:
 
 ```text
-plaintext Secret generated locally
-          ↓
-kubeseal encrypts for your cluster
-          ↓
-SealedSecret committed to Git
-          ↓
-Argo applies SealedSecret
-          ↓
-Sealed Secrets controller creates runtime Secret
+gitops/
+├── bootstrap/
+│   └── root-application.yaml
+├── applications/
+└── resources/
 ```
 
-Example workflow shape:
+The root application can point back to this repository and discover/reconcile the app definitions beneath `gitops/`.
+
+## 7. Sealed Secrets: `kubeseal` stays on the workstation
+
+The controller's **private sealing key stays inside Kubernetes**. Students need only its public certificate locally.
+
+Export the public cert using the instructor-approved method from the cluster and copy only that public file to your workstation.
+
+Then create the temporary plaintext Secret manifest locally (outside Git), seal it with the public certificate, and delete the plaintext file.
 
 ```bash
-kubectl create secret generic example-secret \
-  --namespace example \
-  --from-literal=EXAMPLE_VALUE='replace-me' \
-  --dry-run=client \
-  -o json > /tmp/example-secret.json
-
-kubeseal \
-  --format yaml \
-  < /tmp/example-secret.json \
-  > example-secret-sealed.yaml
-
-rm -f /tmp/example-secret.json
+# RUN ON: WORKSTATION
+kubeseal   --cert team-sealed-secrets-public.pem   --format yaml   < /private/path/example-secret.yaml   > gitops/resources/example/example-secret-sealed.yaml
 ```
 
-Your exact `kubeseal` controller/context arguments depend on the cluster.
+Only the encrypted `SealedSecret` belongs in Git.
 
-> [!CAUTION]
-> Never commit the intermediate plaintext Secret. Verify the generated SealedSecret is intended for the correct namespace and cluster before relying on it.
-
-# 8. Traefik, DNS and TLS
-
-Traefik is the HTTP/HTTPS ingress controller in the reference platform. It does **not** replace the HAProxy Kubernetes API endpoint.
-
-Different jobs:
+Conceptually:
 
 ```text
-HAProxy api-lb-01
-    → Kubernetes API :6443
-
-Traefik in Kubernetes
-    → application HTTP/HTTPS ingress
+plaintext secret (workstation, temporary)
+          ↓ kubeseal + public cert
+encrypted SealedSecret (safe to review/commit)
+          ↓ GitHub / Argo
+cluster controller + private key
+          ↓
+Kubernetes Secret
 ```
 
-Typical request path:
+Never copy the controller's private key to a workstation.
+
+## 8. Traefik, DNS and TLS
+
+The student platform eventually needs browser-facing routes. Keep the concepts separate:
 
 ```text
-browser
-  ↓ DNS
-team hostname
-  ↓
-edge/external routing
-  ↓
-Traefik
-  ↓
-Kubernetes Service
-  ↓
-application Pod
+DNS        → name resolves to the intended access endpoint
+Traefik    → routes HTTP(S) to Kubernetes Services
+cert-manager / issuer → obtains/manages certificates
+TLS Secret → certificate material consumed by ingress
 ```
 
-TLS is obtained through cert-manager using the configured issuer/DNS challenge path. The public `infra-hpc-qc-k8s` manifests show the pattern; your team uses instructor-approved hostnames and credentials.
-
-# 9. Deploy a tiny test application through Git
-
-Before Week 3's real services, prove the entire GitOps/Ingress path with something deliberately simple.
-
-A minimal deployment needs:
-
-```text
-Namespace (optional but recommended)
-Deployment
-Service
-Ingress
-```
-
-Commit it under a clearly named project-owned path, let Argo reconcile it, then prove:
+Validation happens from the cluster and a browser/client path—not simply because an Ingress object exists.
 
 ```bash
-kubectl -n <namespace> get deploy,pod,svc,ingress
+# RUN ON: k8s-cp-01
+kubectl get ingress -A
+kubectl get certificate -A || true
+kubectl get pods -A | grep -E 'traefik|cert-manager'
+```
+
+## 9. GitOps smoke application
+
+Create a very small test workload under `gitops/resources/smoke/` and an Argo application for it. Push the change through a feature branch/PR into `dev`, then let Argo reconcile it.
+
+Acceptance evidence should show:
+
+```bash
+# RUN ON: k8s-cp-01
 kubectl -n argocd get applications
-curl -vk https://<your-test-hostname>/
+kubectl -n <smoke-namespace> get deploy,pod,svc
 ```
 
-Check the certificate presented by the endpoint; do not merely see `HTTP 200` and assume TLS is correct.
+Do not manually fix the deployment after Argo owns it. Change Git and observe reconciliation.
 
-# Success state
-
-Required Week 2 evidence:
-
-```text
-✓ 1 control plane + 2 workers Ready
-✓ Kubernetes /readyz healthy
-✓ Cilium status healthy
-✓ Cilium connectivity test passes or every exception is explained
-✓ Cinder StorageClass available
-✓ dynamic PVC Bound
-✓ data survives Pod replacement using the same PVC
-✓ Argo CD running
-✓ Sealed Secrets controller running
-✓ permanent test app reconciled from Git
-✓ Traefik route reachable
-✓ TLS certificate valid for intended hostname
-✓ team can explain Synced vs Healthy vs reachable
-```
-
-# Troubleshooting order
-
-For a failed application path:
-
-```text
-Argo desired state correct?
-      ↓
-Kubernetes object exists?
-      ↓
-Pod Ready?
-      ↓
-Service has endpoints?
-      ↓
-Ingress accepted?
-      ↓
-Traefik reachable?
-      ↓
-DNS resolves correctly?
-      ↓
-TLS valid?
-      ↓
-user request succeeds?
-```
-
-Useful commands:
+## Troubleshooting commands
 
 ```bash
+# RUN ON: k8s-cp-01
 kubectl get events -A --sort-by=.lastTimestamp | tail -n 50
 kubectl describe pod <pod> -n <namespace>
 kubectl logs <pod> -n <namespace>
 kubectl get endpoints -A
-kubectl get ingress -A
 kubectl -n argocd get applications
 ```
 
-# Deliverable
+Ask which layer owns the failure before changing things: OpenStack SG? host? Kubernetes API? CNI? CSI? Git? Argo? ingress?
 
-Commit a Week 2 record containing:
+## Exit gate
 
-- cluster topology and node roles;
-- Cilium acceptance evidence;
-- storage persistence test evidence;
-- Argo application/status evidence;
-- explanation of your Sealed Secret flow without exposing a secret;
-- working HTTPS test route;
-- at least one failure and the layer where you found it.
+```text
+[k8s-cp-01] 1 control plane + 2 workers Ready
+[k8s-cp-01] Cilium healthy/connectivity validated
+[k8s-cp-01] dynamic Cinder PVC proven
+[k8s-cp-01] Argo CD running and watching this repository
+[WORKSTATION] kubeseal works using public controller certificate only
+[GitHub]      smoke app deployed by GitOps from a reviewed PR
+[cluster]     ingress/TLS baseline validated for the supplied environment
+```
 
-# Next week
-
-Week 3 installs the observability/security planes and deploys the Quantum Platform user-facing application so you can see both **what the platform is doing** and **what users experience**.
+Week 3 assumes these platform services are dependable.
