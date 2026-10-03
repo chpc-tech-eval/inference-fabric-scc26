@@ -1,39 +1,25 @@
-# Week 4 — Agent Control Plane & Hermes
+# Week 4 — Agent Control Plane, Hermes & Remote A100/H200 Inference
 
-Week 4 adds one deliberately bounded agentic vertical slice. The aim is to understand **identity → authorised task → persistent evidence/history → Hermes explanation → remote inference**, not to create an unrestricted autonomous administrator.
+Week 4 adds one bounded agentic vertical slice. The purpose is to learn **authorisation, durable task state, evidence, runtime separation and remote inference**. The purpose is not to hand an LLM unrestricted infrastructure credentials.
 
-You operate the instructor-approved upstream ACP/Hermes images; you do not need to clone the ACP repository merely to deploy it.
+## Command-location rule — read this before doing anything
 
-# Where commands run
+The course deliberately separates **infrastructure authoring** from **cluster administration**.
 
-This programme has a deliberately strict administration boundary. **Do not install or use `kubectl` or the Argo CD CLI on your personal workstation for this project.**
-
-| Location | Tools / responsibilities |
+| Location | Allowed/expected tools |
 | --- | --- |
-| **Your workstation / laptop / desktop** | Git, SSH, OpenStack CLI, Terraform, Ansible and `kubeseal` |
-| **GitHub** | source control, pull requests, CI, container builds, GHCR images and GitOps desired state |
-| **`edge-01`** | WireGuard, Pi-hole/DNS, nftables, Wazuh Manager, Suricata and edge troubleshooting |
-| **`api-lb-01`** | HAProxy and API-endpoint troubleshooting |
-| **`k8s-cp-01`** | `kubectl`, Cilium CLI, Kubernetes bootstrap/diagnostics and any optional Argo CD CLI use |
-| **Kubernetes** | Argo CD, Cinder CSI, Traefik, cert-manager, Prometheus/Grafana, Wazuh components, Student Project Platform, ACP and Hermes |
-| **A100/H200 systems** | separately authorised model serving or project-specific GPU experiments |
+| **WORKSTATION** | Git, SSH, OpenStack CLI, Terraform, Ansible and `kubeseal` |
+| **`edge-01`** | WireGuard, Pi-hole/DNS, nftables, Wazuh Manager, Suricata and host diagnostics |
+| **`api-lb-01`** | HAProxy and load-balancer diagnostics |
+| **`k8s-cp-01`** | `kubectl`, Cilium CLI, Kubernetes diagnostics/bootstrap and optional Argo CD CLI |
+| **GitHub** | PRs, CI, OCI image builds, GHCR and GitOps desired state |
+| **Kubernetes** | Argo CD, CSI, ingress, monitoring, Wazuh components, Student Project Platform, ACP/Hermes |
+| **A100/H200 resource** | only the separately authorised GPU/inference experiment for your project |
 
-A command block in these tutorials is prefixed with its execution location. For example:
+> [!IMPORTANT]
+> Do **not** copy a Kubernetes admin kubeconfig to your laptop for this project. Do not make permanent application changes with `kubectl edit`. Diagnose from `k8s-cp-01`; repair desired state in Git and let Argo CD reconcile it.
 
-```bash
-# RUN ON: WORKSTATION
-terraform plan
-```
-
-or:
-
-```bash
-# RUN ON: k8s-cp-01
-kubectl get nodes
-```
-
-The objective is to keep Kubernetes credentials and cluster administration **inside the cluster administration boundary**, while your workstation remains the infrastructure-authoring and automation machine.
-
+Every command block below states where it runs.
 
 ## Mental model
 
@@ -41,204 +27,332 @@ The objective is to keep Kubernetes credentials and cluster administration **ins
 Student browser
       ↓
 Student Project Platform
-      ↓ short-lived server-side authenticated assertion
+      ↓ authenticated server-side assertion
 Agent Control Plane API
       ↓
-ACP PostgreSQL task/run/event history
+ACP PostgreSQL (task/run/event/evidence ledger)
       ↓
-fixed diagnostic/evidence collection
+fixed read-only diagnostic
       ↓
-Hermes worker (CPU pod in Sebowa)
+Hermes worker in Sebowa Kubernetes
+      ↓ OpenAI-compatible request
+approved A100/H200 inference endpoint
       ↓
-approved remote model endpoint
-      ↓
-A100 / H200 inference
-      ↓
-persisted evidence + explanation
+persisted explanation + evidence
 ```
 
-Important distinctions:
+Critical distinctions:
 
 ```text
-ACP        != Hermes
-Hermes     != the language model
-model      != Kubernetes
-Kubernetes != owner of the A100/H200 allocation
+Student Platform owns the user-facing session.
+ACP owns authorised operational tasks/history.
+Hermes is a runtime/harness, not the security boundary.
+The model performs inference, not authorisation.
+Kubernetes runs the small control-side services; it does not automatically own A100/H200 GPUs.
 ```
 
-## Checklist
-
-- [ ] Deploy dedicated ACP PostgreSQL storage through GitOps.
-- [ ] Deploy pinned ACP API and Hermes worker images.
-- [ ] Configure a team-specific approved model endpoint/credential using Sealed Secrets.
-- [ ] Keep the ACP API private/internal; the browser talks to the Student Platform, not directly to ACP.
-- [ ] Validate one fixed/read-only diagnostic end-to-end.
-- [ ] Show persistent task/run/evidence/result history in Student Project Platform.
-- [ ] Delete/respawn Hermes and prove canonical ACP history remains.
-- [ ] Record the exact ACP/Hermes image digests and model endpoint identifier used.
-- [ ] Merge the accepted Week-4 state into `dev`.
-
-## 1. What ACP owns
-
-For this student slice:
-
-- Student Project Platform owns the student's web session/identity surface.
-- ACP owns authorised agent tasks, runs, events/evidence and policy checks.
-- ACP PostgreSQL is the canonical operational ledger.
-- Hermes is a runtime/harness with its own bounded persistent profile.
-- the A100/H200 endpoint performs inference.
-- Kubernetes runs the small CPU-side services but does not become the GPU scheduler.
-
-## 2. GitOps layout
-
-Keep deployment configuration in this repository:
+## Deployment order
 
 ```text
-gitops/resources/agent-control-plane/
-├── namespace.yaml
-├── storage.yaml
-├── postgres.yaml
-├── api.yaml
-├── hermes.yaml
-├── networkpolicy.yaml
-└── *-sealed.yaml
+1. Get instructor-approved immutable ACP/Hermes image references
+2. Confirm approved model endpoint and network path
+3. Prepare DB/signing/model secrets privately
+4. Seal Kubernetes secrets on workstation
+5. GitOps: namespace/storage/network policies
+6. GitOps: ACP PostgreSQL
+7. Run migration job
+8. Deploy ACP API
+9. Deploy singleton persistent Hermes worker
+10. Configure Student Platform server-side ACP integration
+11. Run fixed diagnostic end-to-end
+12. Test model outage/failure behavior
+13. Delete Hermes pod and prove canonical history persists
+14. Record image/model/provenance
+15. Week-4 PR and acceptance gate
 ```
 
-Use immutable image references announced/provided by the instructor. Do not float on `latest` during the assessed baseline.
+---
 
-## 3. Secrets are created/sealed from the workstation without local kubectl
+# Part A — Treat ACP as upstream software first
 
-The workstation may generate local secret/key material and use `kubeseal`; it does not need a Kubernetes kubeconfig.
+## 1. Do not fork source merely to deploy it
 
-For example, generate an Ed25519 signing key pair for the Student Platform → ACP assertion contract if the provided starter does not already supply an instructor-managed key:
+The team repository owns the deployment/configuration. Use the instructor-approved ACP and Hermes images by immutable digest/tag.
+
+A source contribution to `agent-control-plane` can happen later if your project actually identifies a reusable change.
+
+Record:
+
+```text
+ACP API image digest
+Hermes worker image digest
+Student Platform image digest
+ACP schema/migration version
+approved model logical ID
+model base URL (non-secret endpoint metadata only)
+```
+
+## 2. Phase-1 boundary
+
+The reference ACP Phase-1 slice intentionally has:
+
+- one fixed/read-only diagnostic;
+- PostgreSQL as durable queue/history;
+- one singleton Hermes worker/profile;
+- no Kubernetes token in Hermes;
+- no shell tool;
+- no OpenStack credential;
+- no general provisioning endpoint;
+- one explicit remote model route.
+
+Preserve this safety boundary before experimenting with richer agents.
+
+---
+
+# Part B — Identity and secrets
+
+## 3. Use a short-lived server-side assertion
+
+The browser authenticates to the Student Project Platform. The platform backend—not JavaScript in the browser—creates the short-lived assertion used to call ACP.
+
+Conceptually:
+
+```text
+browser cookie/session
+      ↓
+Student Platform backend checks user/role
+      ↓
+signs short-lived assertion
+      ↓
+ACP verifies public key, issuer/audience/scope/expiry
+```
+
+The browser never receives the signing private key or ACP database credentials.
+
+## 4. Generate private values outside Git
+
+If the course starter does not already provide an instructor-managed signing setup:
 
 ```bash
-# RUN ON: WORKSTATION (private directory outside Git)
+# RUN ON: WORKSTATION (private directory)
+cd ~/.config/scc26-secrets
 openssl genpkey -algorithm ED25519 -out acp-signing-private.pem
 openssl pkey -in acp-signing-private.pem -pubout -out acp-signing-public.pem
 chmod 600 acp-signing-private.pem
 ```
 
-Use the supplied Secret YAML templates, populate them only in a private temporary directory, seal them with the controller public certificate:
+Generate strong database passwords using an approved local tool and populate the provided Secret templates. Do not paste them into Discord/issues.
+
+## 5. Seal Kubernetes secrets offline
 
 ```bash
 # RUN ON: WORKSTATION
-kubeseal --cert team-sealed-secrets-public.pem --format yaml   < /private/path/acp-model-secret.yaml   > gitops/resources/agent-control-plane/acp-model-sealed.yaml
+kubeseal --cert ~/.config/scc26-secrets/<team>-sealed-secrets.cert \
+  --format yaml \
+  < ~/.config/scc26-secrets/acp-db-owner-secret.yaml \
+  > gitops/resources/agent-control-plane/acp-db-owner-sealed.yaml
 ```
 
-Then securely remove the temporary plaintext manifest when it is no longer required. Do not commit raw keys/API tokens.
+Repeat for the restricted app DB credential, ACP verification key, Student Platform signing key and model credential as required by the supplied manifests.
 
-## 4. Remote model endpoint
+Commit only encrypted `SealedSecret` resources/public material.
 
-The Hermes worker should normally be a small CPU workload in your Sebowa Kubernetes cluster. Inference happens remotely:
+---
+
+# Part C — GitOps ordering
+
+## 6. Storage and policies before workloads
+
+Recommended order/sync waves:
 
 ```text
-Hermes pod
-   │ HTTPS/OpenAI-compatible request
-   ▼
-approved model service
-   ├── A100
-   └── H200
+-4 storage class/persistent policy if needed
+-3 namespace + base policy
+-2 encrypted secrets
+ 0 PostgreSQL
+ 1 migration/bootstrap job
+ 2 ACP API + Hermes worker
+ 3 Student Platform ACP integration
 ```
 
-The instructor provides/approves endpoint details and access policy. Never expose someone else's shared GPU service publicly merely to make your lab easier.
+Do not cargo-cult wave numbers; preserve the real prerequisite order.
 
-Inference Fabric students later experiment with the serving layer itself; other teams should consume stable approved endpoints.
+## 7. ACP PostgreSQL
 
-## 5. Deploy through Git/Argo
+Deploy a dedicated ACP PostgreSQL PVC/database instead of reusing the Student Platform DB role/schema. This teaches explicit state ownership.
 
-Push the reviewed SealedSecrets/config/image references and let Argo reconcile them. Inspect only from the cluster admin node:
+From `k8s-cp-01`:
 
 ```bash
 # RUN ON: k8s-cp-01
-kubectl -n agent-control-plane get pod,svc,pvc
-kubectl -n agent-control-plane get events --sort-by=.lastTimestamp | tail -n 30
-kubectl -n argocd get applications
+kubectl -n agent-control-plane get pvc,pod,svc
+kubectl -n agent-control-plane get events --sort-by=.lastTimestamp | tail -n 40
 ```
 
-The exact namespace/resource names may follow the supplied student overlay.
+The API `/ready` should verify the database/schema; process-only `/health` is not enough.
 
-## 6. Student Project Platform agent panel
+## 8. Migration then API then worker
 
-A minimal Week-4 UI is enough:
+```bash
+# RUN ON: k8s-cp-01
+kubectl -n agent-control-plane get jobs
+kubectl -n agent-control-plane logs job/<migration-job>
+kubectl -n agent-control-plane get deploy,statefulset,pod
+```
+
+The worker is intentionally singleton for this phase. Do not scale replicas just because Kubernetes makes it easy.
+
+---
+
+# Part D — Remote inference
+
+## 9. Keep model serving separate from the agent runtime
 
 ```text
-┌──────────────────────────────────────────────┐
-│ SCC26 — Inference Fabric                         │
-│                                              │
-│ Platform                                     │
-│ ● Kubernetes                                │
-│ ● Prometheus                                │
-│ ● Wazuh                                     │
-│                                              │
-│ Agent Control Plane                          │
-│ [ Run Platform Diagnostic ]                  │
-│                                              │
-│ Recent Agent Runs                            │
-│ <id>   Complete   <time>                     │
-│                                              │
-│ Hermes                                       │
-│ <evidence-grounded explanation>              │
-└──────────────────────────────────────────────┘
+Hermes CPU pod in Sebowa
+       │
+       │ authenticated OpenAI-compatible API request
+       ▼
+A100 or H200 model service
 ```
 
-The browser must never receive ACP database credentials, model keys or a broad administrator token.
+Other teams normally **consume** an approved stable endpoint. Inference Fabric later studies the serving layer itself.
 
-## 7. Required end-to-end demonstration
+Before enabling the worker, confirm the approved destination hostname/IP/port and network policy. Do not open an entire GPU subnet when one endpoint is required.
 
-Demonstrate and record:
+## 10. Failure semantics matter
+
+A correct system must distinguish:
 
 ```text
-1. Student logs into Student Project Platform.
-2. Student requests the allowed diagnostic.
-3. Platform authenticates/authorises and makes its server-side ACP request.
-4. ACP records the task/run.
-5. Worker collects the fixed evidence.
-6. Hermes invokes the approved A100/H200 model endpoint.
-7. Explanation is stored and displayed with task/evidence history.
-8. Failure is explicit if evidence/model is unavailable; do not fabricate healthy state.
+no telemetry data
+model endpoint unavailable
+ACP DB unavailable
+worker interrupted
+successful evidence collection but failed inference
 ```
 
-## 8. Restart/persistence test
+Do not turn any of these into a fabricated “healthy” explanation.
+
+---
+
+# Part E — End-to-end acceptance
+
+## 11. Required diagnostic flow
+
+Perform this from the user interface:
+
+```text
+1. Login to Student Project Platform.
+2. Request the one allowed platform diagnostic.
+3. Platform validates the user and signs the short-lived request.
+4. ACP persists task + queued run before returning the ID.
+5. Worker claims the run.
+6. Fixed diagnostic reads the approved Prometheus evidence.
+7. Evidence is persisted.
+8. Hermes asks the approved model to explain only the supplied evidence.
+9. Explanation/status/events are persisted.
+10. Student Platform renders the task history/result.
+```
+
+From `k8s-cp-01`, correlate system state while the task runs:
 
 ```bash
 # RUN ON: k8s-cp-01
 kubectl -n agent-control-plane get pods
-kubectl -n agent-control-plane delete pod <hermes-worker-pod>
+kubectl -n agent-control-plane logs deploy/agent-control-plane-api --tail=100
+kubectl -n agent-control-plane logs statefulset/agent-control-plane-hermes --tail=100
+```
+
+Use actual resource names from the starter overlay.
+
+## 12. Test one controlled failure
+
+With instructor approval, temporarily point the worker at an unavailable test endpoint or otherwise trigger a safe expected failure. Verify:
+
+- task/run becomes an explicit failure state;
+- already-collected evidence remains visible where the contract says it should;
+- no result is misreported as success;
+- the system recovers after reverting the Git configuration.
+
+Do not test failure by deleting databases/PVCs.
+
+## 13. Restart/persistence test
+
+First identify the Hermes pod:
+
+```bash
+# RUN ON: k8s-cp-01
+kubectl -n agent-control-plane get pods
+```
+
+Delete only the worker pod:
+
+```bash
+# RUN ON: k8s-cp-01
+kubectl -n agent-control-plane delete pod <hermes-pod>
 kubectl -n agent-control-plane get pods -w
 ```
 
-After restart:
+After recreation, prove:
 
-- previous ACP task/run/evidence records must remain visible;
-- the persistent Hermes profile should behave according to the provided volume policy;
-- a new diagnostic should complete normally;
-- students should be able to explain which state belongs in PostgreSQL versus the runtime profile.
+- historical ACP tasks/runs/evidence are still queryable from PostgreSQL;
+- the Hermes profile PVC behaves according to the intended persistence policy;
+- a new diagnostic can complete;
+- students can explain which data is canonical in PostgreSQL versus runtime-local profile state.
 
-## 9. What is deliberately not Week 4
+---
 
-Do not add these just because they sound exciting:
+# Part F — Security checklist
 
-- arbitrary shell commands from the agent;
-- Kubernetes cluster-admin credentials in Hermes;
-- OpenStack administrator credentials in Hermes;
-- autonomous remediation;
-- Paperclip meta-orchestration before the basic vertical slice works;
-- personal long-term research memory;
-- uncontrolled model routing.
+Before declaring success, verify Hermes/ACP do **not** receive:
 
-Paperclip or richer specialist agents are stretch work after the bounded ACP path is reliable and auditable.
+- Kubernetes cluster-admin token;
+- OpenStack admin credential;
+- workstation SSH private key;
+- Docker socket/host filesystem mount;
+- arbitrary shell endpoint;
+- Student Platform signing private key in the ACP API container;
+- plaintext model credential in Git.
 
-## Exit gate
+The language model should receive the minimum evidence/context required to explain the bounded task.
+
+---
+
+# Part G — Provenance
+
+Create a Week-4 run manifest using `docs/EXPERIMENT-PROVENANCE.md`. Include:
 
 ```text
-[GitHub/Argo] ACP desired state and encrypted secrets are reproducible
-[k8s-cp-01]  ACP API, PostgreSQL and Hermes worker are healthy
-[Student UI] authenticated fixed diagnostic can be submitted
-[ACP]         task/run/evidence/explanation persist
-[Inference]   approved A100/H200 endpoint is used remotely
-[Restart]     Hermes pod replacement does not erase canonical history
-[Security]    no plaintext secrets or broad cluster credentials are exposed
+team Git SHA
+Student Platform image digest
+ACP image digest
+Hermes image digest
+model logical ID / endpoint class
+run/task ID
+UTC timestamps
+result status
+safe evidence references
 ```
 
-Week 5 now uses this common platform for the project-specific MVP.
+Do not record bearer tokens, database passwords or raw private telemetry that is not suitable for the repository.
+
+---
+
+# Week-4 acceptance gate
+
+| Gate | Proof |
+| --- | --- |
+| GitOps | ACP desired state and encrypted secrets reproducible from repo/private inputs |
+| DB | ACP PostgreSQL PVC/schema ready |
+| API | health + readiness; authenticated task accepted |
+| Worker | singleton Hermes worker healthy with persistent profile |
+| Inference | approved A100/H200 endpoint used remotely |
+| Evidence | fixed diagnostic persists deterministic evidence before explanation |
+| UI | Student Platform displays task/run/evidence/result |
+| Failure | one safe failure is explicit, not hallucinated as success |
+| Restart | Hermes pod replacement does not erase canonical history |
+| Security | no broad cluster/cloud credentials or plaintext secrets exposed |
+| PR | accepted Week-4 state merged into `dev` |
+
+Only after this bounded path works should Paperclip or richer specialist agents become optional stretch work.
