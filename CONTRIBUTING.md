@@ -80,3 +80,8 @@ Every meaningful PR should answer:
 6. How can it be rolled back?
 
 Do not paste sensitive logs/credentials into PRs. Redact environment-specific information that is not required to review the engineering change.
+
+
+## Week-by-week path
+
+Follow `week1/` through `week7/` in order. Weeks 1–4 are acceptance-gated; do not skip a failed layer. Normal student PRs target protected `dev`; the final reviewed release is `dev` → `main`.

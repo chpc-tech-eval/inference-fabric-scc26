@@ -15,11 +15,13 @@ Welcome to the CHPC SCC26 student engineering programme. The first four weeks ar
 2. [Week 2 — Kubernetes substrate & GitOps](week2/README.md)
 3. [Week 3 — Observability, security & Student Project Platform](week3/README.md)
 4. [Week 4 — Agent Control Plane & Hermes](week4/README.md)
-5. **Week 5 — project-specific MVP**
-6. **Week 6 — IEEE-style short paper, poster and reproducibility rebuild**
-7. **Week 7 — consolidation and handover**
+5. [Week 5 — CPU/GPU Inference Runtime Benchmarking](week5/README.md)
+6. [Week 6 — reproducibility rebuild, IEEE paper & poster](week6/README.md)
+7. [Week 7 — consolidation, handover & release](week7/README.md)
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md) before making repository changes and [docs/COMMAND-LOCATIONS.md](docs/COMMAND-LOCATIONS.md) before running infrastructure/Kubernetes commands.
+
+Also read [docs/UPSTREAM-REFERENCE-MAP.md](docs/UPSTREAM-REFERENCE-MAP.md) and use [docs/EXPERIMENT-PROVENANCE.md](docs/EXPERIMENT-PROVENANCE.md) from Week 3 onward.
 
 ## Programme cadence
 
@@ -145,6 +147,7 @@ These are reference/upstream implementations, not mandatory student checkouts:
 - `nyameko/infra-hpc-qc-k8s` — instructor/reference infrastructure architecture and deeper tutorials;
 - `nyameko/quantum-platform` — production portal architecture **for reference only**; students use Student Project Platform;
 - `nyameko/agent-control-plane` — upstream ACP/Hermes source and immutable images;
+- `nyameko/quantum-workflows` — reference for immutable runners, structured results and provenance discipline;
 - `chpc-tech-eval/scc` — teaching/tutorial style and HPC learning lineage.
 
 When the instructor announces a tested version/image, record it. Avoid silently mixing different weekly baselines across team members.

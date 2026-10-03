@@ -1,146 +1,367 @@
-# Week 2 — Kubernetes Substrate & GitOps
+# Week 2 — Kubernetes substrate, Cilium, Cinder & GitOps
 
-Week 2 turns the verified Linux VMs into a small Kubernetes platform and then moves persistent application management into GitOps.
+Week 2 turns the verified Week-1 Linux VMs into a small Kubernetes platform, proves networking and persistent storage, and establishes the GitOps boundary. This is the week where **`k8s-cp-01` becomes the Kubernetes administration host**.
 
-# Where commands run
+## Command-location rule — read this before doing anything
 
-This programme has a deliberately strict administration boundary. **Do not install or use `kubectl` or the Argo CD CLI on your personal workstation for this project.**
+The course deliberately separates **infrastructure authoring** from **cluster administration**.
 
-| Location | Tools / responsibilities |
+| Location | Allowed/expected tools |
 | --- | --- |
-| **Your workstation / laptop / desktop** | Git, SSH, OpenStack CLI, Terraform, Ansible and `kubeseal` |
-| **GitHub** | source control, pull requests, CI, container builds, GHCR images and GitOps desired state |
-| **`edge-01`** | WireGuard, Pi-hole/DNS, nftables, Wazuh Manager, Suricata and edge troubleshooting |
-| **`api-lb-01`** | HAProxy and API-endpoint troubleshooting |
-| **`k8s-cp-01`** | `kubectl`, Cilium CLI, Kubernetes bootstrap/diagnostics and any optional Argo CD CLI use |
-| **Kubernetes** | Argo CD, Cinder CSI, Traefik, cert-manager, Prometheus/Grafana, Wazuh components, Student Project Platform, ACP and Hermes |
-| **A100/H200 systems** | separately authorised model serving or project-specific GPU experiments |
+| **WORKSTATION** | Git, SSH, OpenStack CLI, Terraform, Ansible and `kubeseal` |
+| **`edge-01`** | WireGuard, Pi-hole/DNS, nftables, Wazuh Manager, Suricata and host diagnostics |
+| **`api-lb-01`** | HAProxy and load-balancer diagnostics |
+| **`k8s-cp-01`** | `kubectl`, Cilium CLI, Kubernetes diagnostics/bootstrap and optional Argo CD CLI |
+| **GitHub** | PRs, CI, OCI image builds, GHCR and GitOps desired state |
+| **Kubernetes** | Argo CD, CSI, ingress, monitoring, Wazuh components, Student Project Platform, ACP/Hermes |
+| **A100/H200 resource** | only the separately authorised GPU/inference experiment for your project |
 
-A command block in these tutorials is prefixed with its execution location. For example:
+> [!IMPORTANT]
+> Do **not** copy a Kubernetes admin kubeconfig to your laptop for this project. Do not make permanent application changes with `kubectl edit`. Diagnose from `k8s-cp-01`; repair desired state in Git and let Argo CD reconcile it.
+
+Every command block below states where it runs.
+
+## The ownership model
+
+```text
+Terraform → OpenStack infrastructure
+Ansible   → OS + containerd + kubeadm/bootstrap
+kubeadm   → Kubernetes control-plane/worker registration
+Cilium    → pod/service networking + NetworkPolicy datapath
+Argo CD   → long-lived Kubernetes application lifecycle
+CSI       → persistent storage implementation
+```
+
+The important upstream lesson is that Ansible should not gradually become a Kubernetes application installer. Bootstrap the cluster and GitOps controllers; then hand long-lived application state to Argo CD.
+
+## Deployment order
+
+```text
+0. Confirm Week-1 exit gate
+1. Ansible: containerd + Kubernetes prerequisites
+2. Validate CRI and host kernel settings
+3. Ansible/kubeadm: initialize k8s-cp-01 and join two workers
+4. From k8s-cp-01: prove API healthy (nodes may be NotReady)
+5. Install Cilium
+6. Prove all nodes Ready and run connectivity test
+7. Bootstrap Argo CD + Sealed Secrets
+8. Point root Application at this team's repo/dev branch
+9. Obtain only the Sealed Secrets PUBLIC certificate for workstation use
+10. Seal Cinder/OpenStack credentials on workstation
+11. Argo: deploy Cinder CSI + StorageClasses
+12. PVC write/recreate/read persistence test
+13. Argo: deploy Traefik/cert-manager/DNS/TLS baseline
+14. GitOps drift test
+15. Week-2 PR and acceptance gate
+```
+
+---
+
+# Part A — Kubernetes host prerequisites
+
+## 1. Verify Week 1 first
 
 ```bash
 # RUN ON: WORKSTATION
+cd infrastructure/terraform/environment
 terraform plan
 ```
 
-or:
+There should be no unexplained infrastructure changes.
 
 ```bash
-# RUN ON: k8s-cp-01
-kubectl get nodes
+# RUN ON: WORKSTATION
+cd ../../ansible
+ansible all -i inventories/private/hosts.yml -m ping
 ```
 
-The objective is to keep Kubernetes credentials and cluster administration **inside the cluster administration boundary**, while your workstation remains the infrastructure-authoring and automation machine.
+If either fails, fix Week 1 before proceeding.
 
+## 2. Install Kubernetes prerequisites using Ansible
 
-## The most important boundary this week
+The reference platform separates runtime ownership cleanly:
 
 ```text
-WORKSTATION
-  Ansible + Git + kubeseal
-      │
-      ├── bootstrap/configure hosts
-      └── push desired state
+containerd role
+  ├── repository/package
+  ├── /etc/containerd/config.toml
+  ├── SystemdCgroup=true
+  └── service
 
-k8s-cp-01
-  kubectl + Cilium CLI + bootstrap diagnostics
-      │
-      ▼
-Kubernetes
-  Argo CD reconciles Git
+kube prerequisites role
+  ├── overlay
+  ├── br_netfilter
+  ├── bridge netfilter sysctls
+  ├── ip_forward
+  ├── kubelet/kubeadm/kubectl
+  └── crictl config
 ```
 
-**Do not install/use local `kubectl` for this project.** The kubeconfig/admin context stays on `k8s-cp-01`.
-
-## Checklist
-
-- [ ] Bootstrap one control plane and two workers using the provided automation.
-- [ ] Validate Kubernetes readiness from `k8s-cp-01`.
-- [ ] Install/validate Cilium networking.
-- [ ] Install/validate OpenStack Cinder CSI and a dynamic PVC.
-- [ ] Bootstrap Argo CD in-cluster.
-- [ ] Point an Argo root/application at this team's repository `gitops/` path.
-- [ ] Install Sealed Secrets; export only its **public certificate** for workstation `kubeseal` use.
-- [ ] Deploy a small application through Git → Argo, not by maintaining imperative YAML manually.
-- [ ] Establish Traefik/cert-manager/TLS as provided for the student environment.
-- [ ] Merge the validated Week-2 PR into `dev`.
-
-## 1. Bootstrap Kubernetes with Ansible
-
-Host preparation/bootstrap begins from the workstation:
+Run the student equivalent:
 
 ```bash
 # RUN ON: WORKSTATION
 cd infrastructure/ansible
 ansible-playbook -i inventories/private/hosts.yml playbooks/kubernetes-prereqs.yml
-ansible-playbook -i inventories/private/hosts.yml playbooks/kubernetes.yml
 ```
 
-The exact split may change as the scaffold improves. The important point is that Ansible remains the host/bootstrap automation layer.
+The current instructor reference uses Kubernetes `v1.36.4` and containerd `2.3.4`. Use the instructor-pinned weekly baseline; do not silently upgrade one node independently.
 
-## 2. Kubernetes administration begins on `k8s-cp-01`
+## 3. Validate the runtime before kubeadm
 
 ```bash
 # RUN ON: WORKSTATION
-ssh <k8s-cp-01>
+ansible control_plane:workers -i inventories/private/hosts.yml -b -m shell \
+  -a 'containerd --version; systemctl is-active containerd; crictl info >/dev/null && echo CRI_OK'
+```
+
+Also verify kernel settings:
+
+```bash
+# RUN ON: WORKSTATION
+ansible control_plane:workers -i inventories/private/hosts.yml -b -m shell \
+  -a 'lsmod | egrep "overlay|br_netfilter"; sysctl net.ipv4.ip_forward net.bridge.bridge-nf-call-iptables'
+```
+
+A `permission denied` on `/run/containerd/containerd.sock` when testing as an unprivileged user is a **local Unix socket permission problem**, not a cloud security-group problem. Run the CRI check with privilege escalation.
+
+---
+
+# Part B — kubeadm bootstrap
+
+## 4. Initialize the cluster through the stable API endpoint
+
+The kubeadm configuration should use:
+
+```text
+controlPlaneEndpoint = <API_LB_PRIVATE_IP_OR_DNS>:6443
+advertiseAddress     = <K8S_CP_01_PRIVATE_IP>
+podSubnet            = <TEAM_POD_CIDR>
+serviceSubnet        = 10.96.0.0/12 (unless instructor specifies otherwise)
+CRI socket           = unix:///run/containerd/containerd.sock
+```
+
+Run the student cluster playbook:
+
+```bash
+# RUN ON: WORKSTATION
+ansible-playbook -i inventories/private/hosts.yml playbooks/kubernetes.yml
+```
+
+For this POC it should:
+
+1. initialize `k8s-cp-01` if `/etc/kubernetes/admin.conf` is absent;
+2. generate temporary worker join material;
+3. join `k8s-worker-01` and `k8s-worker-02` serially;
+4. configure the administrator kubeconfig **on `k8s-cp-01`**.
+
+Kubeadm bootstrap tokens are temporary runtime material. Do not commit them to inventory/Git.
+
+## 5. Switch your operational viewpoint to `k8s-cp-01`
+
+```bash
+# RUN ON: WORKSTATION
+ssh <admin-user>@<k8s-cp-private-ip>
 ```
 
 Then:
 
 ```bash
 # RUN ON: k8s-cp-01
-kubectl get nodes -o wide
-kubectl get pods -A
+kubectl cluster-info
 kubectl get --raw='/readyz?verbose'
+kubectl get nodes -o wide
+kubectl get pods -A -o wide
 ```
 
-Expected topology:
+Immediately after kubeadm and before Cilium, this is normal:
 
 ```text
-k8s-cp-01       Ready   control-plane
-k8s-worker-01   Ready
-k8s-worker-02   Ready
+API healthy
+control-plane static pods Running
+workers registered
+nodes NotReady
+CoreDNS Pending
 ```
 
-`kubectl get nodes` is not the final acceptance test. It proves registration/readiness at one level only.
+That means **Kubernetes API healthy ≠ pod networking ready**.
 
-## 3. Cilium
+## 6. Validate HAProxy after kubeadm
 
-Cilium supplies pod networking and network-policy capability.
+```bash
+# RUN ON: api-lb-01
+sudo systemctl is-active haproxy
+sudo journalctl -u haproxy --since '-10 min' --no-pager | tail -n 80
+```
+
+The CP backend should transition from DOWN to UP.
+
+From `k8s-cp-01` or another private/VPN client:
 
 ```bash
 # RUN ON: k8s-cp-01
+curl -k https://<api-lb-address>:6443/healthz
+```
+
+Expected: `ok`.
+
+---
+
+# Part C — Cilium networking
+
+## 7. Confirm cloud network rules before Cilium
+
+For the reference VXLAN baseline, Kubernetes node security groups must permit at least the instructor-approved Cilium node-to-node paths, including VXLAN (`UDP 8472`) and health traffic (`TCP 4240`) inside the Kubernetes network.
+
+Do not put these rules in edge nftables; they are Kubernetes-node traffic.
+
+If rules are missing, change Terraform, review the plan and apply it from the workstation.
+
+## 8. Install the instructor-pinned Cilium baseline
+
+The instructor reference is Cilium `1.20.1`, initially retaining kube-proxy. Use the course-provided pinned values rather than enabling advanced features during first bring-up.
+
+The first CNI bootstrap may use the Cilium CLI/Helm from `k8s-cp-01`; after GitOps is established, configuration should be represented in Git/Argo.
+
+Illustrative baseline:
+
+```bash
+# RUN ON: k8s-cp-01
+cilium install --version 1.20.1
 cilium status --wait
-kubectl -n kube-system get pods -l k8s-app=cilium -o wide
 ```
 
-Run the connectivity test if it is part of the supplied baseline:
+If your starter repository supplies a values file, use it exactly and record its Git SHA.
+
+## 9. Prove the cluster is actually network-ready
 
 ```bash
 # RUN ON: k8s-cp-01
+kubectl get nodes
+kubectl -n kube-system get pods -o wide
+cilium status --wait
 cilium connectivity test
 ```
 
-If Cilium is unhealthy, investigate before deploying more applications. Cloud security-group mistakes can look like CNI failures.
+Your exit condition is not merely “Cilium pods Running.” The connectivity test exercises pod-to-pod/service/policy paths.
 
-## 4. Cinder CSI and persistent storage
+If Cilium pods run but cross-node networking fails, check the **OpenStack node security groups first** before changing Cilium modes.
 
-Cinder CSI allows Kubernetes PVCs to become OpenStack block volumes.
+---
+
+# Part D — Bootstrap Argo CD and Sealed Secrets
+
+## 10. Why this is the ownership transition
+
+The upstream platform tried Ansible+Helm for CSI application lifecycle and ran into increasing coupling: remote Python Kubernetes client dependencies, kubeconfig permissions and package-install responsibilities. The architectural conclusion was:
+
+```text
+Terraform → cloud
+Ansible   → machines/bootstrap
+Argo CD   → Kubernetes applications
+```
+
+Your team should learn the final boundary, not repeat every dead end.
+
+## 11. Bootstrap controllers with Ansible
+
+The student playbook may install Argo CD and the Sealed Secrets controller by executing cluster-side `kubectl` on `k8s-cp-01`. The workstation itself still has no kubeconfig.
+
+```bash
+# RUN ON: WORKSTATION
+ansible-playbook -i inventories/private/hosts.yml playbooks/argocd.yml
+```
+
+Then inspect from the control plane:
 
 ```bash
 # RUN ON: k8s-cp-01
-kubectl get storageclass
-kubectl get pods -A | grep -i cinder
+kubectl -n argocd get pods
+kubectl -n kube-system get deployment sealed-secrets-controller
+kubectl -n argocd get applications
 ```
 
-Create a small PVC test manifest in **Git** under an appropriate test/evidence path. After review/temporary apply for the storage exercise, prove:
+Your root Application should point to **this team repository**, normally tracking protected `dev` during the active project:
 
-- claim becomes `Bound`;
-- a pod can write data;
-- deleting/recreating the pod preserves that data;
-- you can identify the corresponding OpenStack volume.
+```text
+repoURL: https://github.com/chpc-tech-eval/<team-repo>.git
+targetRevision: dev
+path: gitops/applications-or-root
+```
 
-Inspect with:
+`main` remains the reviewed release branch.
+
+## 12. Public certificate to the workstation; private key stays in cluster/recovery storage
+
+The Sealed Secrets private key belongs to the cluster and secure DR storage. It is never copied into the repository.
+
+Use the instructor/student bootstrap helper to export **only the public sealing certificate** from the cluster to a temporary path on `k8s-cp-01`, then copy that public certificate to your workstation. The exact helper may be provided by the course scaffold.
+
+Result on workstation:
+
+```text
+~/.config/scc26-secrets/<team>-sealed-secrets.cert
+```
+
+This file is public cryptographic material; the controller's private key is not.
+
+---
+
+# Part E — Cinder CSI persistent storage
+
+## 13. Understand the credential separation
+
+```text
+Argo CD Kubernetes identity  ≠  OpenStack Cinder credential
+```
+
+Argo CD uses its in-cluster ServiceAccount to create Kubernetes objects. Cinder CSI separately needs an OpenStack application credential so it can provision/attach volumes.
+
+## 14. Create the plaintext Cinder Secret only in a private workstation directory
+
+Use the course template and your team OpenStack application credential. Do not type secrets into a tracked file.
+
+```bash
+# RUN ON: WORKSTATION
+cp gitops/templates/cinder-csi-secret.example.yaml \
+  ~/.config/scc26-secrets/cinder-csi-secret.yaml
+chmod 600 ~/.config/scc26-secrets/cinder-csi-secret.yaml
+$EDITOR ~/.config/scc26-secrets/cinder-csi-secret.yaml
+```
+
+Seal it offline with the public certificate:
+
+```bash
+# RUN ON: WORKSTATION
+kubeseal \
+  --cert ~/.config/scc26-secrets/<team>-sealed-secrets.cert \
+  --format yaml \
+  < ~/.config/scc26-secrets/cinder-csi-secret.yaml \
+  > gitops/resources/cinder-csi/cinder-csi-cloud-config-sealed.yaml
+```
+
+Inspect the resulting YAML: it must be a `SealedSecret`, not a plaintext `Secret` containing your credential.
+
+Securely retain/recreate the plaintext source according to instructor policy; never commit it.
+
+## 15. Deploy CSI through Argo
+
+Commit/push the Cinder Application, StorageClasses and sealed credential through the normal PR/GitOps path.
+
+From `k8s-cp-01`:
+
+```bash
+# RUN ON: k8s-cp-01
+kubectl -n argocd get applications
+kubectl -n kube-system get pods | grep -i cinder
+kubectl get storageclass
+```
+
+The reference platform models `cinder-ssd`, `cinder-hdd` and provider-default classes where those volume types exist. Use only types available in your Sebowa project.
+
+## 16. Persistence exercise — write, recreate, read
+
+Create the provided Git-managed PVC/test workload. Once Argo reconciles it:
 
 ```bash
 # RUN ON: k8s-cp-01
@@ -148,137 +369,90 @@ kubectl get pvc -A
 kubectl get pv
 ```
 
-Use the workstation only for cloud-side confirmation:
+Write a marker using the test pod, record it, delete/recreate the pod (not the PVC), and verify the marker survives.
 
-```bash
-# RUN ON: WORKSTATION
-openstack volume list
-```
-
-## 5. Bootstrap Argo CD, then let Git take over
-
-The first Argo installation/root application is a bootstrap operation performed from `k8s-cp-01`. After that, long-lived application state should come from this repository.
-
-```bash
-# RUN ON: k8s-cp-01
-kubectl -n argocd get pods
-kubectl -n argocd get applications
-```
-
-The normal steady-state workflow is:
+A successful test proves:
 
 ```text
-WORKSTATION: edit/commit/push
-          ↓
-GITHUB: reviewed desired state
-          ↓
-ARGO CD IN KUBERNETES
-          ↓
-cluster reconciles
+PVC requested
+→ Cinder volume provisioned
+→ attached
+→ mounted
+→ data written
+→ pod replaced
+→ same persistent data read
 ```
 
-Use `kubectl` to inspect/test/diagnose. Repair permanent state in Git rather than `kubectl edit`.
+Do not claim persistence merely because the PVC is `Bound`.
 
-## 6. One GitOps repository: this one
+---
 
-Argo does not need a separate student repository. Use:
+# Part F — Traefik, cert-manager, DNS and TLS
+
+## 17. Keep controller and configuration concerns separate
+
+A useful GitOps model is:
 
 ```text
-gitops/
-├── bootstrap/
-│   └── root-application.yaml
-├── applications/
-└── resources/
+cert-manager            → controller/chart
+cert-manager-config     → ClusterIssuer + encrypted credential
+Traefik                 → ingress controller
+student-platform        → Deployment/Service/Ingress
 ```
 
-The root application can point back to this repository and discover/reconcile the app definitions beneath `gitops/`.
+Use Argo sync waves only for real prerequisites; do not create a decorative dependency maze.
 
-## 7. Sealed Secrets: `kubeseal` stays on the workstation
+## 18. DNS/TLS baseline
 
-The controller's **private sealing key stays inside Kubernetes**. Students need only its public certificate locally.
+Use the instructor-approved domain strategy. The Student Project Platform in Week 3 should request TLS through its Ingress rather than manually creating certificates whenever possible.
 
-Export the public cert using the instructor-approved method from the cluster and copy only that public file to your workstation.
-
-Then create the temporary plaintext Secret manifest locally (outside Git), seal it with the public certificate, and delete the plaintext file.
-
-```bash
-# RUN ON: WORKSTATION
-kubeseal   --cert team-sealed-secrets-public.pem   --format yaml   < /private/path/example-secret.yaml   > gitops/resources/example/example-secret-sealed.yaml
-```
-
-Only the encrypted `SealedSecret` belongs in Git.
-
-Conceptually:
-
-```text
-plaintext secret (workstation, temporary)
-          ↓ kubeseal + public cert
-encrypted SealedSecret (safe to review/commit)
-          ↓ GitHub / Argo
-cluster controller + private key
-          ↓
-Kubernetes Secret
-```
-
-Never copy the controller's private key to a workstation.
-
-## 8. Traefik, DNS and TLS
-
-The student platform eventually needs browser-facing routes. Keep the concepts separate:
-
-```text
-DNS        → name resolves to the intended access endpoint
-Traefik    → routes HTTP(S) to Kubernetes Services
-cert-manager / issuer → obtains/manages certificates
-TLS Secret → certificate material consumed by ingress
-```
-
-Validation happens from the cluster and a browser/client path—not simply because an Ingress object exists.
+From `k8s-cp-01`:
 
 ```bash
 # RUN ON: k8s-cp-01
+kubectl -n cert-manager get pods
+kubectl -n traefik get pods,svc
 kubectl get ingress -A
-kubectl get certificate -A || true
-kubectl get pods -A | grep -E 'traefik|cert-manager'
+kubectl get certificate -A
 ```
 
-## 9. GitOps smoke application
+If the environment uses external HAProxy/NodePorts for ingress, an empty Kubernetes `LoadBalancer` status is not automatically a failure. Validate the actual traffic path.
 
-Create a very small test workload under `gitops/resources/smoke/` and an Argo application for it. Push the change through a feature branch/PR into `dev`, then let Argo reconcile it.
+---
 
-Acceptance evidence should show:
+# Part G — GitOps behavior and drift
+
+## 19. Prove Argo owns the application lifecycle
+
+Make a harmless Git change (for example replica count or test ConfigMap) on a feature branch, merge it to `dev`, and watch Argo reconcile it.
 
 ```bash
 # RUN ON: k8s-cp-01
 kubectl -n argocd get applications
-kubectl -n <smoke-namespace> get deploy,pod,svc
+kubectl -n <test-namespace> get deploy,pod,configmap
 ```
 
-Do not manually fix the deployment after Argo owns it. Change Git and observe reconciliation.
+Then deliberately create a small temporary drift only if instructed, observe Argo detect/self-heal it, and document what happened.
 
-## Troubleshooting commands
+The rule for the rest of the course is:
 
-```bash
-# RUN ON: k8s-cp-01
-kubectl get events -A --sort-by=.lastTimestamp | tail -n 50
-kubectl describe pod <pod> -n <namespace>
-kubectl logs <pod> -n <namespace>
-kubectl get endpoints -A
-kubectl -n argocd get applications
-```
+> `kubectl` is for inspection, diagnosis and bounded tests. Desired application state lives in Git.
 
-Ask which layer owns the failure before changing things: OpenStack SG? host? Kubernetes API? CNI? CSI? Git? Argo? ingress?
+---
 
-## Exit gate
+# Week-2 acceptance gate
 
-```text
-[k8s-cp-01] 1 control plane + 2 workers Ready
-[k8s-cp-01] Cilium healthy/connectivity validated
-[k8s-cp-01] dynamic Cinder PVC proven
-[k8s-cp-01] Argo CD running and watching this repository
-[WORKSTATION] kubeseal works using public controller certificate only
-[GitHub]      smoke app deployed by GitOps from a reviewed PR
-[cluster]     ingress/TLS baseline validated for the supplied environment
-```
+| Gate | Required proof |
+| --- | --- |
+| Runtime | containerd active + `crictl info` works on all K8s nodes |
+| kubeadm | API `/readyz` healthy through stable HAProxy endpoint |
+| Nodes | CP + two workers registered |
+| Cilium | all nodes Ready + connectivity test passes |
+| Argo | root app follows this repo/`dev` and controller healthy |
+| Sealed Secrets | controller healthy; workstation has public cert only |
+| Cinder | real PVC write/recreate/read persistence test |
+| Ingress | Traefik/cert-manager baseline reachable through approved path |
+| GitOps | a Git change produces the intended cluster reconciliation |
+| PR | Week-2 changes reviewed and merged into `dev` |
 
-Week 3 assumes these platform services are dependable.
+Record the versions/Git SHA used. A green dashboard is not a substitute for the tests above.
