@@ -1,0 +1,112 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{cite}
+\usepackage{url}
+
+\title{Benchmarking Open LLM Inference Runtimes Across CPU, A100 and H200 Resources}
+
+\author{\IEEEauthorblockN{Student A, Student B, Student C, Student D}
+\IEEEauthorblockA{Centre for High Performance Computing / SCC26 Student Project\\
+South Africa\\
+\{student1, student2, student3, student4\}@example.invalid}
+\and
+\IEEEauthorblockN{Mentor Name}
+\IEEEauthorblockA{Mentor / Affiliation\\
+mentor@example.invalid}}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+% 100--150 words. State: problem/context; what you built/tested; method; one or two
+% evidence-backed findings; why the result matters. Do not put literature review here.
+This paper presents ...
+\end{abstract}
+
+\begin{IEEEkeywords}
+OpenStack, Kubernetes, GitOps, reproducibility, % add 2--4 project-specific keywords
+\end{IEEEkeywords}
+
+\section{Introduction}
+% ~0.5 page.
+% 1) What problem are you studying?
+% 2) Why does it matter?
+% 3) What gap/question does this student project address?
+% 4) End with 2--4 concrete contributions, not promises.
+
+\section{System Architecture and Context}
+% ~0.5--0.7 page. Describe only the components needed to understand your experiment.
+% Include one readable architecture figure. Separate Sebowa OpenStack/Kubernetes from
+% externally allocated A100/H200 resources when applicable.
+
+\begin{figure}[t]
+  \centering
+  % \includegraphics[width=\columnwidth]{figures/architecture.pdf}
+  \fbox{\parbox[c][30mm][c]{0.92\columnwidth}{\centering Replace with architecture figure}}
+  \caption{System architecture and experimental boundary.}
+  \label{fig:architecture}
+\end{figure}
+
+\section{Methodology}
+% ~0.7--1.0 page.
+% Define reproducible procedure, versions, resources, workload/scenario, variables,
+% controls, metrics and success/failure criteria. State what was held constant.
+
+\subsection{Platform and Software Baseline}
+% Git SHA(s), immutable image digest(s), Kubernetes/OpenStack resources, relevant versions.
+
+\subsection{Experimental Procedure}
+% Exact experiment sequence and number of repeats where meaningful.
+
+\subsection{Metrics and Evidence}
+% Name metrics/log sources and how timestamps/results were correlated.
+
+\section{Results}
+% ~1--1.3 pages. Present measured observations before interpretation.
+% Use compact tables/plots. Do not report fake placeholders in the final paper.
+
+\begin{table}[t]
+\centering
+\caption{Example result structure (replace with real measurements).}
+\label{tab:results}
+\begin{tabular}{lll}
+\toprule
+Configuration & Metric & Measured value \\
+\midrule
+A & metric-1 & TBD \\
+B & metric-1 & TBD \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Discussion and Limitations}
+% Explain why results behaved as observed; relate to architecture/resource constraints;
+% discuss measurement uncertainty, failed tests, threats to validity and what cannot be
+% concluded from this small POC.
+
+\section{Reproducibility}
+% Short but explicit: repository revision, image digests, protected inputs, rebuild test,
+% what was automated, what remained manual, and whether the key result was reproduced.
+
+\section{Conclusion and Future Work}
+% 1 short paragraph: answer the research question at the level supported by evidence.
+% Then name the most defensible next step(s), not a wishlist.
+
+\section*{Acknowledgment}
+% Acknowledge CHPC/NICIS/CSIR, mentors, infrastructure providers and collaborators as appropriate.
+
+% Project-specific minimum evidence ideas retained as author comments:
+% - A common model/workload compared fairly across compatible runtimes.
+% - CPU baseline plus at least one A100 or H200 GPU baseline.
+% - Machine-readable measurements for TTFT/latency/throughput and errors.
+% - CPU/RAM/GPU/VRAM telemetry correlated to benchmark windows.
+% - A runtime/model/execution-class catalogue and workload-specific conclusions—not a universal winner.
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}
