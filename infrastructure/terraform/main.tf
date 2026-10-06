@@ -176,4 +176,5 @@ resource "openstack_networking_floatingip_v2" "edge" {
 resource "openstack_networking_floatingip_associate_v2" "edge" {
   floating_ip = openstack_networking_floatingip_v2.edge.address
   port_id     = openstack_networking_port_v2.node["edge-01"].id
+  depends_on = [openstack_networking_router_interface_v2.net]
 }
