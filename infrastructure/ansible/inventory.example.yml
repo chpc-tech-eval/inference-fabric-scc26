@@ -1,0 +1,33 @@
+all:
+  vars:
+    ansible_user: rocky
+
+    # same values as in terraform.tfvars
+    mgmt_cidr: "<..>"
+    k8s_cidr: "<..>"
+    vpn_cidr: "<..>"
+
+    # public IPs allowed to SSH to edge-01 until the VPN online
+    bootstrap_ssh_cidrs:
+      - "<..>/32"
+
+    # one entry per member
+    admin_users:
+      - name: "<..>"
+        ssh_public_key: "<..>"
+
+    # wireguard server + one peer per team member
+    wireguard_server_address: "<..>/24"
+    wireguard_peers:
+      - name: "<..>"
+        public_key: "<..>"
+        address: "<..>/32"
+
+    # pi-hole
+    pihole_password: "<..>"
+    pihole_upstream_dns: "<..>"
+    team_domain: "<..>"
+
+  children:
+    # the machines get added here with:
+    # terraform -chdir=../terraform output -raw inventory_hosts | sed 's/^/    /' >> inventory.yml

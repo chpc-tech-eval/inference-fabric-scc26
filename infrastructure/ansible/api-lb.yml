@@ -1,0 +1,57 @@
+# Sets up HAProxy on api-lb-01.
+# Gives Kubernetes one fixed address (10.151.0.100:6443).
+# Note: Need kubernetes set up still
+
+- name: Set up api-lb-01
+  hosts: api_lb
+  become: true
+
+  tasks:
+    - name: Install HAProxy
+      dnf:
+        name: haproxy
+        state: present
+
+    - name: Let HAProxy use any port
+      ansible.posix.seboolean:
+        name: haproxy_connect_any
+        state: true
+        persistent: true
+
+    - name: Write the HAProxy config
+      copy:
+        dest: /etc/haproxy/haproxy.cfg
+        mode: "0644"
+        validate: haproxy -c -f %s    # check the config before saving it
+        content: |
+          global
+              log /dev/log local0
+
+          defaults
+              log global
+              mode tcp
+              timeout connect 5s
+              timeout client 1h
+              timeout server 1h
+
+          frontend kubernetes-api
+              bind {{ ansible_host }}:6443
+              default_backend control-plane
+
+          backend control-plane
+          {% for host in groups['control_plane'] %}
+              server {{ host }} {{ hostvars[host].ansible_host }}:6443 check
+          {% endfor %}
+      notify: reload haproxy
+
+    - name: Start HAProxy
+      systemd:
+        name: haproxy
+        enabled: true
+        state: started
+
+  handlers:
+    - name: reload haproxy
+      systemd:
+        name: haproxy
+        state: reloaded

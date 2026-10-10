@@ -1,0 +1,184 @@
+gavin_sumeruk@Gavin-Sumeruk:~/inference-fabric-scc26/infrastructure/ansible$ ansible-playbook bootstrap.yml
+
+PLAY [Bootstrap all machines] **************************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [edge-01]
+ok: [k8s-worker-02]
+ok: [k8s-worker-01]
+ok: [api-lb-01]
+ok: [k8s-cp-01]
+
+TASK [Install base packages] ***************************************************
+changed: [edge-01]
+changed: [k8s-cp-01]
+changed: [api-lb-01]
+changed: [k8s-worker-02]
+changed: [k8s-worker-01]
+
+TASK [Set timezone] ************************************************************
+changed: [edge-01]
+changed: [k8s-cp-01]
+changed: [api-lb-01]
+changed: [k8s-worker-02]
+changed: [k8s-worker-01]
+
+TASK [Start chrony] ************************************************************
+ok: [edge-01]
+ok: [k8s-worker-01]
+ok: [api-lb-01]
+ok: [k8s-worker-02]
+ok: [k8s-cp-01]
+
+TASK [Make sure SELinux is enforcing] ******************************************
+ok: [edge-01]
+ok: [api-lb-01]
+ok: [k8s-cp-01]
+ok: [k8s-worker-01]
+ok: [k8s-worker-02]
+
+TASK [Add all machines to /etc/hosts] ******************************************
+changed: [edge-01]
+changed: [k8s-cp-01]
+changed: [api-lb-01]
+changed: [k8s-worker-02]
+changed: [k8s-worker-01]
+
+TASK [Create a user for each team member] **************************************
+changed: [edge-01] => (item={'name': 'gavin', 'ssh_public_key': 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDIIm3f12NRSgYPMVTMYesx9gVL8ZJn4YpwE49cfMSE+ gavin.sumeruk@gmail.com'})
+changed: [k8s-cp-01] => (item={'name': 'gavin', 'ssh_public_key': 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDIIm3f12NRSgYPMVTMYesx9gVL8ZJn4YpwE49cfMSE+ gavin.sumeruk@gmail.com'})
+changed: [api-lb-01] => (item={'name': 'gavin', 'ssh_public_key': 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDIIm3f12NRSgYPMVTMYesx9gVL8ZJn4YpwE49cfMSE+ gavin.sumeruk@gmail.com'})
+changed: [k8s-worker-01] => (item={'name': 'gavin', 'ssh_public_key': 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDIIm3f12NRSgYPMVTMYesx9gVL8ZJn4YpwE49cfMSE+ gavin.sumeruk@gmail.com'})
+changed: [k8s-worker-02] => (item={'name': 'gavin', 'ssh_public_key': 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDIIm3f12NRSgYPMVTMYesx9gVL8ZJn4YpwE49cfMSE+ gavin.sumeruk@gmail.com'})
+
+TASK [Add each member's SSH key] ***********************************************
+changed: [edge-01] => (item={'name': 'gavin', 'ssh_public_key': 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDIIm3f12NRSgYPMVTMYesx9gVL8ZJn4YpwE49cfMSE+ gavin.sumeruk@gmail.com'})
+changed: [api-lb-01] => (item={'name': 'gavin', 'ssh_public_key': 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDIIm3f12NRSgYPMVTMYesx9gVL8ZJn4YpwE49cfMSE+ gavin.sumeruk@gmail.com'})
+changed: [k8s-worker-01] => (item={'name': 'gavin', 'ssh_public_key': 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDIIm3f12NRSgYPMVTMYesx9gVL8ZJn4YpwE49cfMSE+ gavin.sumeruk@gmail.com'})
+changed: [k8s-worker-02] => (item={'name': 'gavin', 'ssh_public_key': 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDIIm3f12NRSgYPMVTMYesx9gVL8ZJn4YpwE49cfMSE+ gavin.sumeruk@gmail.com'})
+changed: [k8s-cp-01] => (item={'name': 'gavin', 'ssh_public_key': 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDIIm3f12NRSgYPMVTMYesx9gVL8ZJn4YpwE49cfMSE+ gavin.sumeruk@gmail.com'})
+
+TASK [Let team members use sudo without a password] ****************************
+changed: [edge-01] => (item={'name': 'gavin', 'ssh_public_key': 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDIIm3f12NRSgYPMVTMYesx9gVL8ZJn4YpwE49cfMSE+ gavin.sumeruk@gmail.com'})
+changed: [api-lb-01] => (item={'name': 'gavin', 'ssh_public_key': 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDIIm3f12NRSgYPMVTMYesx9gVL8ZJn4YpwE49cfMSE+ gavin.sumeruk@gmail.com'})
+changed: [k8s-worker-02] => (item={'name': 'gavin', 'ssh_public_key': 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDIIm3f12NRSgYPMVTMYesx9gVL8ZJn4YpwE49cfMSE+ gavin.sumeruk@gmail.com'})
+changed: [k8s-cp-01] => (item={'name': 'gavin', 'ssh_public_key': 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDIIm3f12NRSgYPMVTMYesx9gVL8ZJn4YpwE49cfMSE+ gavin.sumeruk@gmail.com'})
+changed: [k8s-worker-01] => (item={'name': 'gavin', 'ssh_public_key': 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDIIm3f12NRSgYPMVTMYesx9gVL8ZJn4YpwE49cfMSE+ gavin.sumeruk@gmail.com'})
+
+TASK [Turn off password and root SSH logins] ***********************************
+changed: [edge-01]
+changed: [api-lb-01]
+changed: [k8s-worker-02]
+changed: [k8s-cp-01]
+changed: [k8s-worker-01]
+
+TASK [Check the SSH config is valid] *******************************************
+ok: [edge-01]
+ok: [api-lb-01]
+ok: [k8s-cp-01]
+ok: [k8s-worker-02]
+ok: [k8s-worker-01]
+
+RUNNING HANDLER [restart sshd] *************************************************
+changed: [api-lb-01]
+changed: [k8s-cp-01]
+changed: [k8s-worker-02]
+changed: [k8s-worker-01]
+changed: [edge-01]
+
+PLAY RECAP *********************************************************************
+api-lb-01                  : ok=12   changed=8    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+edge-01                    : ok=12   changed=8    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+k8s-cp-01                  : ok=12   changed=8    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+k8s-worker-01              : ok=12   changed=8    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+k8s-worker-02              : ok=12   changed=8    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+
+gavin_sumeruk@Gavin-Sumeruk:~/inference-fabric-scc26/infrastructure/ansible$ ansible-playbook bootstrap.yml
+
+PLAY [Bootstrap all machines] **************************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [edge-01]
+ok: [k8s-worker-02]
+ok: [api-lb-01]
+ok: [k8s-worker-01]
+ok: [k8s-cp-01]
+
+TASK [Install base packages] ***************************************************
+ok: [edge-01]
+ok: [api-lb-01]
+ok: [k8s-cp-01]
+ok: [k8s-worker-02]
+ok: [k8s-worker-01]
+
+TASK [Set timezone] ************************************************************
+ok: [edge-01]
+ok: [k8s-cp-01]
+ok: [k8s-worker-02]
+ok: [k8s-worker-01]
+ok: [api-lb-01]
+
+TASK [Start chrony] ************************************************************
+ok: [edge-01]
+ok: [api-lb-01]
+ok: [k8s-cp-01]
+ok: [k8s-worker-01]
+ok: [k8s-worker-02]
+
+TASK [Make sure SELinux is enforcing] ******************************************
+ok: [edge-01]
+ok: [api-lb-01]
+ok: [k8s-cp-01]
+ok: [k8s-worker-02]
+ok: [k8s-worker-01]
+
+TASK [Add all machines to /etc/hosts] ******************************************
+ok: [edge-01]
+ok: [k8s-worker-02]
+ok: [k8s-cp-01]
+ok: [api-lb-01]
+ok: [k8s-worker-01]
+
+TASK [Create a user for each team member] **************************************
+ok: [edge-01] => (item={'name': 'gavin', 'ssh_public_key': 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDIIm3f12NRSgYPMVTMYesx9gVL8ZJn4YpwE49cfMSE+ gavin.sumeruk@gmail.com'})
+ok: [k8s-worker-02] => (item={'name': 'gavin', 'ssh_public_key': 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDIIm3f12NRSgYPMVTMYesx9gVL8ZJn4YpwE49cfMSE+ gavin.sumeruk@gmail.com'})
+ok: [k8s-worker-01] => (item={'name': 'gavin', 'ssh_public_key': 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDIIm3f12NRSgYPMVTMYesx9gVL8ZJn4YpwE49cfMSE+ gavin.sumeruk@gmail.com'})
+ok: [k8s-cp-01] => (item={'name': 'gavin', 'ssh_public_key': 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDIIm3f12NRSgYPMVTMYesx9gVL8ZJn4YpwE49cfMSE+ gavin.sumeruk@gmail.com'})
+ok: [api-lb-01] => (item={'name': 'gavin', 'ssh_public_key': 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDIIm3f12NRSgYPMVTMYesx9gVL8ZJn4YpwE49cfMSE+ gavin.sumeruk@gmail.com'})
+
+TASK [Add each member's SSH key] ***********************************************
+ok: [edge-01] => (item={'name': 'gavin', 'ssh_public_key': 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDIIm3f12NRSgYPMVTMYesx9gVL8ZJn4YpwE49cfMSE+ gavin.sumeruk@gmail.com'})
+ok: [api-lb-01] => (item={'name': 'gavin', 'ssh_public_key': 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDIIm3f12NRSgYPMVTMYesx9gVL8ZJn4YpwE49cfMSE+ gavin.sumeruk@gmail.com'})
+ok: [k8s-worker-02] => (item={'name': 'gavin', 'ssh_public_key': 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDIIm3f12NRSgYPMVTMYesx9gVL8ZJn4YpwE49cfMSE+ gavin.sumeruk@gmail.com'})
+ok: [k8s-cp-01] => (item={'name': 'gavin', 'ssh_public_key': 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDIIm3f12NRSgYPMVTMYesx9gVL8ZJn4YpwE49cfMSE+ gavin.sumeruk@gmail.com'})
+ok: [k8s-worker-01] => (item={'name': 'gavin', 'ssh_public_key': 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDIIm3f12NRSgYPMVTMYesx9gVL8ZJn4YpwE49cfMSE+ gavin.sumeruk@gmail.com'})
+
+TASK [Let team members use sudo without a password] ****************************
+ok: [k8s-worker-02] => (item={'name': 'gavin', 'ssh_public_key': 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDIIm3f12NRSgYPMVTMYesx9gVL8ZJn4YpwE49cfMSE+ gavin.sumeruk@gmail.com'})
+ok: [api-lb-01] => (item={'name': 'gavin', 'ssh_public_key': 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDIIm3f12NRSgYPMVTMYesx9gVL8ZJn4YpwE49cfMSE+ gavin.sumeruk@gmail.com'})
+ok: [k8s-worker-01] => (item={'name': 'gavin', 'ssh_public_key': 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDIIm3f12NRSgYPMVTMYesx9gVL8ZJn4YpwE49cfMSE+ gavin.sumeruk@gmail.com'})
+ok: [k8s-cp-01] => (item={'name': 'gavin', 'ssh_public_key': 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDIIm3f12NRSgYPMVTMYesx9gVL8ZJn4YpwE49cfMSE+ gavin.sumeruk@gmail.com'})
+ok: [edge-01] => (item={'name': 'gavin', 'ssh_public_key': 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDIIm3f12NRSgYPMVTMYesx9gVL8ZJn4YpwE49cfMSE+ gavin.sumeruk@gmail.com'})
+
+TASK [Turn off password and root SSH logins] ***********************************
+ok: [edge-01]
+ok: [api-lb-01]
+ok: [k8s-cp-01]
+ok: [k8s-worker-02]
+ok: [k8s-worker-01]
+
+TASK [Check the SSH config is valid] *******************************************
+ok: [edge-01]
+ok: [k8s-cp-01]
+ok: [api-lb-01]
+ok: [k8s-worker-02]
+ok: [k8s-worker-01]
+
+PLAY RECAP *********************************************************************
+api-lb-01                  : ok=11   changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+edge-01                    : ok=11   changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+k8s-cp-01                  : ok=11   changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+k8s-worker-01              : ok=11   changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+k8s-worker-02              : ok=11   changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+
+gavin_sumeruk@Gavin-Sumeruk:~/inference-fabric-scc26/infrastructure/ansible$

@@ -1,0 +1,20 @@
+# Replace all <..> NB NB Then copy to git ignored file
+openstack_cloud       = "<..>"
+external_network_name = "<..>"
+image_name            = "<..>"
+ssh_public_key        = "<..>"
+
+flavors = {
+  edge          = "<~4 vCPU / 10 GB>"
+  api_lb        = "<~2 vCPU / 4 GB>"
+  control_plane = "<~4 vCPU / 8 GB>"
+  worker        = "<~8 vCPU / 16 GB>"
+}
+
+mgmt_cidr       = "<..>"
+k8s_cidr        = "<..>"
+dns_nameservers = ["<..>"]
+
+# Every member's public IP
+bootstrap_ssh_cidrs  = ["<member 1 public IP>/32", "<member 2 public IP>/32"]
+enable_bootstrap_ssh = true

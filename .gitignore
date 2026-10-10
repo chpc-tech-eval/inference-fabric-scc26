@@ -1,0 +1,23 @@
+# Terraform:
+*.tfstate
+*.tfstate.*
+.terraform/
+tfplan
+terraform.tfvars
+
+# Ansible:
+infrastructure/ansible/inventory.yml
+
+# Cloud credentials and keys
+clouds.yaml
+secure.yaml
+*.pem
+*.key
+id_ed25519*
+
+# Editor / OS noise
+.vscode/
+Thumbs.db
+*.auto.tfvars
+*.crt.private
+secrets-private/

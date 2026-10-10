@@ -1,0 +1,77 @@
+# Basic setup for all 5 machines
+
+- name: Bootstrap all machines
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Install base packages
+      dnf:
+        name: [chrony, bind-utils, policycoreutils-python-utils]
+        state: present
+
+    - name: Set timezone
+      community.general.timezone:
+        name: Africa/Johannesburg
+
+    - name: Start chrony
+      systemd:
+        name: chronyd
+        enabled: true
+        state: started
+
+    - name: Make sure SELinux is enforcing
+      ansible.posix.selinux:
+        policy: targeted
+        state: enforcing
+
+    - name: Add all machines to /etc/hosts
+      blockinfile:
+        path: /etc/hosts
+        marker: "# {mark} SCC26 HOSTS"
+        block: |
+          {% for host in groups['all'] %}
+          {{ hostvars[host].private_ip | default(hostvars[host].ansible_host) }} {{ host }}
+          {% endfor %}
+
+    - name: Create a user for each team member
+      user:
+        name: "{{ item.name }}"
+        groups: wheel
+        append: true
+        shell: /bin/bash
+      loop: "{{ admin_users }}"
+
+    - name: Add each member's SSH key
+      ansible.posix.authorized_key:
+        user: "{{ item.name }}"
+        key: "{{ item.ssh_public_key }}"
+      loop: "{{ admin_users }}"
+
+    - name: Let team members use sudo without a password
+      copy:
+        dest: "/etc/sudoers.d/{{ item.name }}"
+        content: "{{ item.name }} ALL=(ALL) NOPASSWD: ALL\n"
+        mode: "0440"
+        validate: visudo -cf %s
+      loop: "{{ admin_users }}"
+
+    - name: Turn off password and root SSH logins
+      copy:
+        dest: /etc/ssh/sshd_config.d/10-scc26.conf
+        content: |
+          PasswordAuthentication no
+          KbdInteractiveAuthentication no
+          PermitRootLogin no
+        mode: "0600"
+      notify: restart sshd
+
+    - name: Check the SSH config is valid
+      command: sshd -t
+      changed_when: false
+
+  handlers:
+    - name: restart sshd
+      systemd:
+        name: sshd
+        state: restarted
