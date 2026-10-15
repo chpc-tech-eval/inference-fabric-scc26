@@ -1,0 +1,69 @@
+# RUN ON: WORKSTATION
+- name: Initialise control plane
+  hosts: control_plane
+  become: true
+  vars:
+    api_endpoint: "10.151.0.100:6443"   # api-lb-01
+    cp_ip: "10.151.0.11"
+    pod_cidr: "10.244.0.0/16"           # PROVISIONAL: confirm with mentor before Cilium
+    service_cidr: "10.96.0.0/12"
+    admin_user: "roarke"                  # login user on k8s-cp-01 (see ansible_user in inventory.yml)
+  tasks:
+    - name: Check whether the cluster is already initialised
+      ansible.builtin.stat:
+        path: /etc/kubernetes/admin.conf
+      register: admin_conf
+
+    - name: Render kubeadm config
+      ansible.builtin.copy:
+        dest: /root/kubeadm-config.yaml
+        mode: "0600"
+        content: |
+          apiVersion: kubeadm.k8s.io/v1beta4
+          kind: InitConfiguration
+          localAPIEndpoint:
+            advertiseAddress: {{ cp_ip }}
+          nodeRegistration:
+            criSocket: unix:///run/containerd/containerd.sock
+          ---
+          apiVersion: kubeadm.k8s.io/v1beta4
+          kind: ClusterConfiguration
+          controlPlaneEndpoint: "{{ api_endpoint }}"
+          networking:
+            podSubnet: {{ pod_cidr }}
+            serviceSubnet: {{ service_cidr }}
+      when: not admin_conf.stat.exists
+
+    - name: kubeadm init
+      ansible.builtin.command: kubeadm init --config /root/kubeadm-config.yaml
+      when: not admin_conf.stat.exists
+
+    - name: Create kubeconfig for the admin user (on k8s-cp-01 only)
+      ansible.builtin.shell: |
+        mkdir -p /home/{{ admin_user }}/.kube
+        cp /etc/kubernetes/admin.conf /home/{{ admin_user }}/.kube/config
+        chown -R {{ admin_user }}:{{ admin_user }} /home/{{ admin_user }}/.kube
+      args:
+        creates: "/home/{{ admin_user }}/.kube/config"
+
+    - name: Generate a temporary join command
+      ansible.builtin.command: >
+        kubeadm token create --print-join-command --ttl 30m
+        --kubeconfig /etc/kubernetes/admin.conf
+      register: join_cmd
+      changed_when: false
+      no_log: true            # the token is a secret; never commit or paste it
+      retries: 5
+      delay: 10
+      until: join_cmd.rc == 0            # the token is a secret; never commit or paste it
+
+- name: Join workers
+  hosts: workers
+  become: true
+  serial: 1
+  tasks:
+    - name: Join if not already a member
+      ansible.builtin.command: "{{ hostvars[groups['control_plane'][0]].join_cmd.stdout }}"
+      args:
+        creates: /etc/kubernetes/kubelet.conf
+      no_log: true
