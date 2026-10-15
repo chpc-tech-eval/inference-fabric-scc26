@@ -1,0 +1,22 @@
+# Tells Argo CD: deploy gitops/resources/gitops-test into namespace gitops-test.
+# selfHeal undoes manual changes (the drift test).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: gitops-test
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/chpc-tech-eval/inference-fabric-scc26.git
+    targetRevision: dev
+    path: gitops/resources/gitops-test
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: gitops-test
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

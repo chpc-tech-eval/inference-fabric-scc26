@@ -1,0 +1,22 @@
+# Tells Argo CD: deploy gitops/resources/storage-test into namespace storage-test,
+# and keep it matching Git (selfHeal recreates the pod after Task 3 deletes it).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: storage-test
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/chpc-tech-eval/inference-fabric-scc26.git
+    targetRevision: dev
+    path: gitops/resources/storage-test
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: storage-test
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
