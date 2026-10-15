@@ -87,18 +87,30 @@ locals {
   # Will need to add rules for kubernetes
   base_rules = {
     # name               = [security group,      protocol, from,  to,    source]
-    edge-dns-udp-mgmt = ["edge", "udp", 53, 53, local.M]
-    edge-dns-tcp-mgmt = ["edge", "tcp", 53, 53, local.M]
-    edge-dns-udp-k8s  = ["edge", "udp", 53, 53, local.K]
-    edge-dns-tcp-k8s  = ["edge", "tcp", 53, 53, local.K]
-    edge-wireguard    = ["edge", "udp", 51820, 51820, "0.0.0.0/0"]
-    edge-icmp-k8s     = ["edge", "icmp", 0, 0, local.K]
-    api-lb-ssh        = ["api-lb", "tcp", 22, 22, local.M]
-    api-lb-icmp       = ["api-lb", "icmp", 0, 0, local.M]
-    cp-ssh            = ["k8s-control-plane", "tcp", 22, 22, local.M]
-    cp-icmp           = ["k8s-control-plane", "icmp", 0, 0, local.M]
-    worker-ssh        = ["k8s-worker", "tcp", 22, 22, local.M]
-    worker-icmp       = ["k8s-worker", "icmp", 0, 0, local.M]
+    edge-dns-udp-mgmt    = ["edge", "udp", 53, 53, local.M]
+    edge-dns-tcp-mgmt    = ["edge", "tcp", 53, 53, local.M]
+    edge-dns-udp-k8s     = ["edge", "udp", 53, 53, local.K]
+    edge-dns-tcp-k8s     = ["edge", "tcp", 53, 53, local.K]
+    edge-wireguard       = ["edge", "udp", 51820, 51820, "0.0.0.0/0"]
+    edge-icmp-k8s        = ["edge", "icmp", 0, 0, local.K]
+    api-lb-ssh           = ["api-lb", "tcp", 22, 22, local.M]
+    api-lb-icmp          = ["api-lb", "icmp", 0, 0, local.M]
+    cp-ssh               = ["k8s-control-plane", "tcp", 22, 22, local.M]
+    cp-icmp              = ["k8s-control-plane", "icmp", 0, 0, local.M]
+    worker-ssh           = ["k8s-worker", "tcp", 22, 22, local.M]
+    worker-icmp          = ["k8s-worker", "icmp", 0, 0, local.M]
+    api-lb-k8sapi-k8s    = ["api-lb", "tcp", 6443, 6443, local.K]
+    api-lb-http          = ["api-lb", "tcp", 80, 80, local.M]
+    api-lb-https         = ["api-lb", "tcp", 443, 443, local.M]
+    cp-apiserver         = ["k8s-control-plane", "tcp", 6443, 6443, local.K]
+    cp-kubelet           = ["k8s-control-plane", "tcp", 10250, 10250, local.K]
+    cp-cilium-vxlan      = ["k8s-control-plane", "udp", 8472, 8472, local.K]
+    cp-cilium-health     = ["k8s-control-plane", "tcp", 4240, 4240, local.K]
+    worker-kubelet       = ["k8s-worker", "tcp", 10250, 10250, local.K]
+    worker-cilium-vxlan  = ["k8s-worker", "udp", 8472, 8472, local.K]
+    worker-cilium-health = ["k8s-worker", "tcp", 4240, 4240, local.K]
+    worker-http-from-lb  = ["k8s-worker", "tcp", 80, 80, "${local.api_lb_ip}/32"]
+    worker-https-from-lb = ["k8s-worker", "tcp", 443, 443, "${local.api_lb_ip}/32"]
   }
 
   # Temporary public SSH to edge-01 (disappears when enable_bootstrap_ssh = false)
@@ -176,5 +188,5 @@ resource "openstack_networking_floatingip_v2" "edge" {
 resource "openstack_networking_floatingip_associate_v2" "edge" {
   floating_ip = openstack_networking_floatingip_v2.edge.address
   port_id     = openstack_networking_port_v2.node["edge-01"].id
-  depends_on = [openstack_networking_router_interface_v2.net]
+  depends_on  = [openstack_networking_router_interface_v2.net]
 }
