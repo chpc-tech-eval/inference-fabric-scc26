@@ -456,3 +456,5 @@ The rule for the rest of the course is:
 | PR | Week-2 changes reviewed and merged into `dev` |
 
 Record the versions/Git SHA used. A green dashboard is not a substitute for the tests above.
+
+Please ignore this, I am showing how to do pull requests :)
