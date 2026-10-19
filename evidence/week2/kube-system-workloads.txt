@@ -1,0 +1,8 @@
+NAME                          DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR            AGE
+daemonset.apps/cilium         3         3         3       3            3           kubernetes.io/os=linux   3d6h
+daemonset.apps/cilium-envoy   3         3         3       3            3           kubernetes.io/os=linux   3d6h
+daemonset.apps/kube-proxy     3         3         3       3            3           kubernetes.io/os=linux   4d8h
+
+NAME                              READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/cilium-operator   1/1     1            1           3d6h
+deployment.apps/coredns           2/2     2            2           4d8h

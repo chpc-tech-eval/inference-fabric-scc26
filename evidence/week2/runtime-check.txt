@@ -1,0 +1,24 @@
+k8s-cp-01 | CHANGED | rc=0 >>
+containerd containerd v2.4.2 b7a25261e029d68978bbf290df0a62fc819b3c51
+active
+CRI_OK
+            SystemdCgroup = true
+v1.36.4
+kubelet-1.36.4-150500.1.1.x86_64
+kubectl-1.36.4-150500.1.1.x86_64
+k8s-worker-01 | CHANGED | rc=0 >>
+containerd containerd v2.3.4 db8809540e1a7a9da5d518876894933ff55692ab
+active
+CRI_OK
+            SystemdCgroup = true
+v1.36.4
+kubelet-1.36.4-150500.1.1.x86_64
+kubectl-1.36.4-150500.1.1.x86_64
+k8s-worker-02 | CHANGED | rc=0 >>
+containerd containerd v2.3.4 db8809540e1a7a9da5d518876894933ff55692ab
+active
+CRI_OK
+            SystemdCgroup = true
+v1.36.4
+kubelet-1.36.4-150500.1.1.x86_64
+kubectl-1.36.4-150500.1.1.x86_64

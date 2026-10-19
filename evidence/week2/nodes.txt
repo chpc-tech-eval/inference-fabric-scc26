@@ -1,0 +1,4 @@
+NAME                      STATUS   ROLES           AGE    VERSION   INTERNAL-IP   EXTERNAL-IP   OS-IMAGE                      KERNEL-VERSION                         CONTAINER-RUNTIME
+k8s-cp-01.novalocal       Ready    control-plane   4d8h   v1.36.4   10.151.0.11   <none>        Rocky Linux 9.8 (Blue Onyx)   5.14.0-503.14.1.el9_5.x86_64 (amd64)   containerd://2.4.2
+k8s-worker-01.novalocal   Ready    <none>          4d8h   v1.36.4   10.151.0.21   <none>        Rocky Linux 9.5 (Blue Onyx)   5.14.0-503.14.1.el9_5.x86_64 (amd64)   containerd://2.3.4
+k8s-worker-02.novalocal   Ready    <none>          4d8h   v1.36.4   10.151.0.22   <none>        Rocky Linux 9.5 (Blue Onyx)   5.14.0-503.14.1.el9_5.x86_64 (amd64)   containerd://2.3.4
