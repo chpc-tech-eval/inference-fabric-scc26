@@ -60,6 +60,9 @@
 
               # pi-hole web page from the vpn
               tcp dport { 80, 443 } ip saddr $VPN accept
+
+              # wazuh agents and the dashboard's API calls
+              tcp dport { 1514, 1515, 55000 } ip saddr { $MGMT, $K8S, $VPN } accept
             }
 
             chain forward {

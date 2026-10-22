@@ -1,6 +1,5 @@
 # Sets up HAProxy on api-lb-01.
 # Gives Kubernetes one fixed address (10.151.0.100:6443).
-# Note: Need kubernetes set up still
 
 - name: Set up api-lb-01
   hosts: api_lb
@@ -60,6 +59,24 @@
           {% for host in groups['workers'] %}
               server {{ host }} {{ hostvars[host].ansible_host }}:443 check
           {% endfor %}
+
+          # Wazuh indexer: Filebeat on edge-01 -> Traefik TCP passthrough on the workers
+          frontend wazuh-indexer
+              bind {{ ansible_host }}:9200
+              default_backend wazuh-indexer
+
+          backend wazuh-indexer
+          {% for host in groups['workers'] %}
+              server {{ host }} {{ hostvars[host].ansible_host }}:9200 check
+          {% endfor %}
+
+          # HAProxy's own metrics for Prometheus
+          frontend stats
+              mode http
+              bind {{ ansible_host }}:8404
+              http-request use-service prometheus-exporter if { path /metrics }
+              stats enable
+              stats uri /stats
       notify: reload haproxy
 
     - name: Start HAProxy
