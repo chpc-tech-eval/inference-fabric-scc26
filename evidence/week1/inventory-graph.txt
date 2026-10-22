@@ -1,0 +1,12 @@
+@all:
+  |--@ungrouped:
+  |--@edge_nodes:
+  |  |--edge-01
+  |--@private_nodes:
+  |  |--@api_lb:
+  |  |  |--api-lb-01
+  |  |--@control_plane:
+  |  |  |--k8s-cp-01
+  |  |--@workers:
+  |  |  |--k8s-worker-01
+  |  |  |--k8s-worker-02

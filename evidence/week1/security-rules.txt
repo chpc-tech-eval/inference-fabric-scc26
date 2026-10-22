@@ -1,0 +1,16 @@
+tolist([
+  "api-lb-icmp",
+  "api-lb-ssh",
+  "cp-icmp",
+  "cp-ssh",
+  "edge-dns-tcp-k8s",
+  "edge-dns-tcp-mgmt",
+  "edge-dns-udp-k8s",
+  "edge-dns-udp-mgmt",
+  "edge-icmp-k8s",
+  "edge-ssh-bootstrap-168-210-146-43_32",
+  "edge-ssh-bootstrap-196-42-116-37_32",
+  "edge-wireguard",
+  "worker-icmp",
+  "worker-ssh",
+])

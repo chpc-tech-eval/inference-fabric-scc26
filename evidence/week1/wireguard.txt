@@ -1,0 +1,11 @@
+edge-01 | CHANGED | rc=0 >>
+interface: wg0
+  public key: cuuXPKE9QaykdbmCGUntHwqmMRLJIyykNVmQgb4CxBQ=
+  private key: (hidden)
+  listening port: 51820
+
+peer: SDxF8kSicOECbT1n90jUQtjipAZ/oTjKHV36J49dfTc=
+  endpoint: 196.42.116.37:65429
+  allowed ips: 10.152.0.11/32
+  latest handshake: 1 minute, 57 seconds ago
+  transfer: 24.86 KiB received, 26.87 KiB sent

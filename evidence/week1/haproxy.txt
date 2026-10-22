@@ -1,0 +1,2 @@
+Configuration file is valid
+LISTEN 0      4096    10.151.0.100:6443      0.0.0.0:*    users:(("haproxy",pid=21175,fd=7))                      

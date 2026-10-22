@@ -1,0 +1,204 @@
+# Sets up edge-01: firewall, WireGuard VPN and Pi-hole DNS.
+
+- name: Set up edge-01
+  hosts: edge_nodes
+  become: true
+
+  tasks:
+    - name: Install packages
+      dnf:
+        name: [nftables, wireguard-tools, podman]
+        state: present
+      tags: [firewall, wireguard, pihole]
+
+    # ---------------- firewall ----------------
+    - name: Stop firewalld
+      systemd:
+        name: firewalld
+        state: stopped
+        enabled: false
+      ignore_errors: true
+      tags: firewall
+
+    - name: Allow edge-01 to forward traffic
+      ansible.posix.sysctl:
+        name: net.ipv4.ip_forward
+        value: "1"
+      tags: firewall
+
+    - name: Write the nftables rules
+      copy:
+        dest: /etc/sysconfig/nftables.conf
+        mode: "0600"
+        validate: nft -c -f %s    # check the rules before saving
+        content: |
+          flush ruleset
+
+          define UPLINK = "{{ ansible_facts.default_ipv4.interface }}"
+          define MGMT = {{ mgmt_cidr }}
+          define K8S = {{ k8s_cidr }}
+          define VPN = {{ vpn_cidr }}
+
+          table inet filter {
+            chain input {
+              type filter hook input priority filter; policy drop;
+              iifname "lo" accept
+              ct state established,related accept
+              ip protocol icmp accept
+
+              # wireguard from anywhere
+              udp dport 51820 accept
+
+              # ssh from the vpn, plus our public IPs during setup
+              tcp dport 22 ip saddr $VPN accept
+          {% for ip in bootstrap_ssh_cidrs %}
+              tcp dport 22 ip saddr {{ ip }} accept
+          {% endfor %}
+
+              # dns from our own networks
+              meta l4proto { tcp, udp } th dport 53 ip saddr { $MGMT, $K8S, $VPN } accept
+
+              # pi-hole web page from the vpn
+              tcp dport { 80, 443 } ip saddr $VPN accept
+            }
+
+            chain forward {
+              type filter hook forward priority filter; policy drop;
+              ct state established,related accept
+              # vpn users can only reach our private networks
+              iifname "wg0" ip daddr { $MGMT, $K8S } accept
+            }
+          }
+
+          # make vpn traffic look like it comes from edge-01
+          table ip nat {
+            chain postrouting {
+              type nat hook postrouting priority srcnat; policy accept;
+              ip saddr $VPN oifname $UPLINK masquerade
+            }
+          }
+      notify: reload nftables
+      tags: firewall
+
+    - name: Start nftables
+      systemd:
+        name: nftables
+        enabled: true
+        state: started
+      tags: firewall
+
+    # ---------------- wireguard ----------------
+    - name: Make the server keys
+      shell: |
+        umask 077
+        wg genkey > /etc/wireguard/wg0.key
+        wg pubkey < /etc/wireguard/wg0.key > /etc/wireguard/wg0.pub
+      args:
+        creates: /etc/wireguard/wg0.key
+      tags: wireguard
+
+    - name: Read the server private key
+      command: cat /etc/wireguard/wg0.key
+      register: wg_private_key
+      changed_when: false
+      no_log: true    # don't print the private key!!
+      tags: wireguard
+
+    - name: Read the server public key
+      command: cat /etc/wireguard/wg0.pub
+      register: wg_public_key
+      changed_when: false
+      tags: wireguard
+
+    - name: Write the WireGuard config
+      copy:
+        dest: /etc/wireguard/wg0.conf
+        mode: "0600"
+        content: |
+          [Interface]
+          Address = {{ wireguard_server_address }}
+          ListenPort = 51820
+          PrivateKey = {{ wg_private_key.stdout }}
+          {% for peer in wireguard_peers %}
+
+          # {{ peer.name }}
+          [Peer]
+          PublicKey = {{ peer.public_key }}
+          AllowedIPs = {{ peer.address }}
+          {% endfor %}
+      no_log: true
+      notify: restart wireguard
+      tags: wireguard
+
+    - name: Start WireGuard
+      systemd:
+        name: wg-quick@wg0
+        enabled: true
+        state: started
+      tags: wireguard
+
+    - name: Show what everyone needs for their VPN tunnel
+      debug:
+        msg:
+          - "Server public key: {{ wg_public_key.stdout }}"
+          - "Endpoint: {{ ansible_host }}:51820"
+          - "AllowedIPs: {{ vpn_cidr }}, {{ mgmt_cidr }}, {{ k8s_cidr }}"
+      tags: wireguard
+
+    # ---------------- pi-hole ----------------
+    - name: Folder for pi-hole's data
+      file:
+        path: /opt/pihole
+        state: directory
+        mode: "0755"
+      tags: pihole
+
+    - name: Set up pi-hole as a container service
+      copy:
+        dest: /etc/containers/systemd/pihole.container
+        mode: "0600"
+        content: |
+          [Container]
+          Image=docker.io/pihole/pihole:latest
+          ContainerName=pihole
+          Network=host
+          Volume=/opt/pihole:/etc/pihole:Z
+          Environment=TZ=Africa/Johannesburg
+          Environment=FTLCONF_webserver_api_password={{ pihole_password }}
+          Environment=FTLCONF_dns_listeningMode=all
+          Environment="FTLCONF_dns_upstreams={{ pihole_upstream_dns }}"
+          Environment="FTLCONF_dns_hosts={% for host in groups['all'] %}{{ hostvars[host].private_ip | default(hostvars[host].ansible_host) }} {{ host }}.{{ team_domain }} {{ host }}{% if not loop.last %};{% endif %}{% endfor %}"
+
+          [Service]
+          Restart=always
+          TimeoutStartSec=300
+
+          [Install]
+          WantedBy=multi-user.target
+      no_log: true    # has the pi-hole password in it
+      notify: restart pihole
+      tags: pihole
+
+    - name: Start pi-hole
+      systemd:
+        name: pihole
+        daemon_reload: true
+        state: started
+      tags: pihole
+
+  handlers:
+    - name: reload nftables
+      systemd:
+        name: nftables
+        state: reloaded
+
+    - name: restart wireguard
+      systemd:
+        name: wg-quick@wg0
+        state: restarted
+
+    - name: restart pihole
+      systemd:
+        name: pihole
+        daemon_reload: true
+        state: restarted
