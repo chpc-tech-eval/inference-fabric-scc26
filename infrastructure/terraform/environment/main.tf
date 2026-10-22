@@ -111,6 +111,11 @@ locals {
     worker-cilium-health = ["k8s-worker", "tcp", 4240, 4240, local.K]
     worker-http-from-lb  = ["k8s-worker", "tcp", 80, 80, "${local.api_lb_ip}/32"]
     worker-https-from-lb = ["k8s-worker", "tcp", 443, 443, "${local.api_lb_ip}/32"]
+    # ---- Cilium connectivity: NodePorts + node-to-node ping ----
+    cp-nodeports     = ["k8s-control-plane", "tcp", 30000, 32767, local.K]
+    worker-nodeports = ["k8s-worker", "tcp", 30000, 32767, local.K]
+    cp-icmp-k8s      = ["k8s-control-plane", "icmp", 0, 0, local.K]
+    worker-icmp-k8s  = ["k8s-worker", "icmp", 0, 0, local.K]
   }
 
   # Temporary public SSH to edge-01 (disappears when enable_bootstrap_ssh = false)
