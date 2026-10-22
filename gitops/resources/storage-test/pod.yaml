@@ -1,0 +1,25 @@
+# A tiny pod that mounts the PVC at /data and sleeps forever.
+# A bare Pod (not a Deployment) so its name stays "persistence-test" when Argo CD recreates it.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: persistence-test
+  namespace: storage-test
+  labels:
+    app: persistence-test
+spec:
+  terminationGracePeriodSeconds: 5
+  containers:
+    - name: busybox
+      image: docker.io/library/busybox:1.37
+      command: ["sh", "-c", "while true; do sleep 3600; done"]
+      resources:
+        requests: {cpu: 10m, memory: 16Mi}
+        limits: {cpu: 100m, memory: 64Mi}
+      volumeMounts:
+        - name: data
+          mountPath: /data
+  volumes:
+    - name: data
+      persistentVolumeClaim:
+        claimName: persistence-test

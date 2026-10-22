@@ -1,0 +1,8 @@
+# The value Task 4 changes in Git to prove Git drives the cluster.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gitops-proof
+  namespace: gitops-test
+data:
+  message: "hello from git"
