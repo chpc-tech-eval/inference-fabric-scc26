@@ -1,0 +1,27 @@
+NAMESPACE           NAME                                          READY   STATUS    RESTARTS   AGE    IP             NODE                      NOMINATED NODE   READINESS GATES
+cilium-test-1       client-657b75749d-2nd7f                       1/1     Running   0          3d6h   10.244.1.48    k8s-worker-02.novalocal   <none>           <none>
+cilium-test-1       client2-78bbbfb455-d8mnr                      1/1     Running   0          3d6h   10.244.1.9     k8s-worker-02.novalocal   <none>           <none>
+cilium-test-1       client3-58f7994d44-tdbvs                      1/1     Running   0          3d6h   10.244.0.79    k8s-worker-01.novalocal   <none>           <none>
+cilium-test-1       echo-other-node-5769bd665b-pzhrv              2/2     Running   0          3d6h   10.244.0.176   k8s-worker-01.novalocal   <none>           <none>
+cilium-test-1       echo-same-node-7d8968df78-7fbtd               2/2     Running   0          3d6h   10.244.1.53    k8s-worker-02.novalocal   <none>           <none>
+cilium-test-1       host-netns-4hpqj                              1/1     Running   0          3d6h   10.151.0.21    k8s-worker-01.novalocal   <none>           <none>
+cilium-test-1       host-netns-sf5h8                              1/1     Running   0          3d6h   10.151.0.22    k8s-worker-02.novalocal   <none>           <none>
+cilium-test-1       l7-lb-7ddb9855ff-tpb2c                        2/2     Running   0          3d6h   10.244.0.246   k8s-worker-01.novalocal   <none>           <none>
+cilium-test-ccnp1   client-ccnp-77f56ccfc4-94rhj                  1/1     Running   0          3d6h   10.244.0.236   k8s-worker-01.novalocal   <none>           <none>
+cilium-test-ccnp2   client-ccnp-77f56ccfc4-zcddf                  1/1     Running   0          3d6h   10.244.1.16    k8s-worker-02.novalocal   <none>           <none>
+kube-system         cilium-cgb78                                  1/1     Running   0          3d6h   10.151.0.22    k8s-worker-02.novalocal   <none>           <none>
+kube-system         cilium-envoy-82gf7                            1/1     Running   0          3d6h   10.151.0.22    k8s-worker-02.novalocal   <none>           <none>
+kube-system         cilium-envoy-hs8qb                            1/1     Running   0          3d6h   10.151.0.21    k8s-worker-01.novalocal   <none>           <none>
+kube-system         cilium-envoy-s6l8w                            1/1     Running   0          3d6h   10.151.0.11    k8s-cp-01.novalocal       <none>           <none>
+kube-system         cilium-gsjdq                                  1/1     Running   0          3d6h   10.151.0.21    k8s-worker-01.novalocal   <none>           <none>
+kube-system         cilium-operator-7b76dc94dd-tthgd              1/1     Running   0          3d6h   10.151.0.22    k8s-worker-02.novalocal   <none>           <none>
+kube-system         cilium-vqjrc                                  1/1     Running   0          3d6h   10.151.0.11    k8s-cp-01.novalocal       <none>           <none>
+kube-system         coredns-589f44dc88-csr8t                      1/1     Running   0          4d8h   10.244.0.62    k8s-worker-01.novalocal   <none>           <none>
+kube-system         coredns-589f44dc88-sxrfb                      1/1     Running   0          4d8h   10.244.0.208   k8s-worker-01.novalocal   <none>           <none>
+kube-system         etcd-k8s-cp-01.novalocal                      1/1     Running   0          4d8h   10.151.0.11    k8s-cp-01.novalocal       <none>           <none>
+kube-system         kube-apiserver-k8s-cp-01.novalocal            1/1     Running   0          4d8h   10.151.0.11    k8s-cp-01.novalocal       <none>           <none>
+kube-system         kube-controller-manager-k8s-cp-01.novalocal   1/1     Running   0          4d8h   10.151.0.11    k8s-cp-01.novalocal       <none>           <none>
+kube-system         kube-proxy-fpbsc                              1/1     Running   0          4d8h   10.151.0.21    k8s-worker-01.novalocal   <none>           <none>
+kube-system         kube-proxy-jmbh6                              1/1     Running   0          4d8h   10.151.0.11    k8s-cp-01.novalocal       <none>           <none>
+kube-system         kube-proxy-w9c2n                              1/1     Running   0          4d8h   10.151.0.22    k8s-worker-02.novalocal   <none>           <none>
+kube-system         kube-scheduler-k8s-cp-01.novalocal            1/1     Running   0          4d8h   10.151.0.11    k8s-cp-01.novalocal       <none>           <none>
