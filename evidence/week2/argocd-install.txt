@@ -1,0 +1,12 @@
+k8s-cp-01 | CHANGED | rc=0 >>
+NAME                                                READY   STATUS    RESTARTS   AGE
+argocd-application-controller-0                     1/1     Running   0          9m36s
+argocd-applicationset-controller-5b768d786f-6h997   1/1     Running   0          9m37s
+argocd-dex-server-6fb56f4676-5ldd7                  1/1     Running   0          9m37s
+argocd-notifications-controller-574dd5f54d-mg2rq    1/1     Running   0          9m37s
+argocd-redis-6d79dcbc5b-pl4qr                       1/1     Running   0          9m37s
+argocd-repo-server-fb87d8994-fr7vb                  1/1     Running   0          9m37s
+argocd-server-795d58f54b-lgzjz                      1/1     Running   0          9m37s
+k8s-cp-01 | CHANGED | rc=0 >>
+NAME                        READY   UP-TO-DATE   AVAILABLE   AGE
+sealed-secrets-controller   1/1     1            1           8m41s

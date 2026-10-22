@@ -1,0 +1,123 @@
+- name: Kubernetes node prerequisites (Rocky Linux)
+  hosts: control_plane:workers   # TODO: your real group names
+  become: true
+  vars:
+    k8s_minor: "v1.36"                   # TODO: instructor-pinned
+    k8s_version: "1.36.4"                # TODO
+    containerd_version: "2.3.4-2.el9"          # TODO: verify it exists (see notes)
+  tasks:
+    - name: SELinux permissive now
+      ansible.posix.selinux:
+        policy: targeted
+        state: permissive
+
+    - name: Disable swap now
+      ansible.builtin.command: swapoff -a
+      changed_when: false
+
+    - name: Disable swap permanently
+      ansible.builtin.replace:
+        path: /etc/fstab
+        regexp: '^([^#].*\sswap\s.*)$'
+        replace: '# \1'
+
+    - name: Load kernel modules on boot
+      ansible.builtin.copy:
+        dest: /etc/modules-load.d/k8s.conf
+        content: |
+          overlay
+          br_netfilter
+
+    - name: Load kernel modules now
+      community.general.modprobe:
+        name: "{{ item }}"
+      loop: [overlay, br_netfilter]
+
+    - name: Kubernetes sysctls
+      ansible.posix.sysctl:
+        name: "{{ item.key }}"
+        value: "{{ item.value }}"
+        sysctl_file: /etc/sysctl.d/99-k8s.conf
+        reload: true
+      loop:
+        - { key: net.ipv4.ip_forward, value: "1" }
+        - { key: net.bridge.bridge-nf-call-iptables, value: "1" }
+        - { key: net.bridge.bridge-nf-call-ip6tables, value: "1" }
+
+    - name: Install iproute-tc (kubeadm preflight needs tc)
+      ansible.builtin.dnf:
+        name: iproute-tc
+        state: present
+
+    # ---- containerd (Docker's RPM repo; Rocky uses the rhel path) ----
+    - name: Add Docker repo
+      ansible.builtin.get_url:
+        url: https://download.docker.com/linux/rhel/docker-ce.repo
+        dest: /etc/yum.repos.d/docker-ce.repo
+        mode: "0644"
+
+    - name: Install containerd
+      ansible.builtin.dnf:
+        name: "containerd.io-{{ containerd_version }}"
+        state: present
+
+    - name: Check whether the config already has SystemdCgroup
+      ansible.builtin.command: grep -q "SystemdCgroup" /etc/containerd/config.toml
+      register: cg_check
+      failed_when: false
+      changed_when: false
+      check_mode: false
+
+    - name: Generate default containerd config
+      ansible.builtin.shell: containerd config default > /etc/containerd/config.toml
+      when: cg_check.rc != 0
+
+    - name: Enable SystemdCgroup
+      ansible.builtin.replace:
+        path: /etc/containerd/config.toml
+        regexp: 'SystemdCgroup = false'
+        replace: 'SystemdCgroup = true'
+      notify: Restart containerd
+
+    - name: Enable and start containerd
+      ansible.builtin.systemd:
+        name: containerd
+        enabled: true
+        state: started
+
+    # ---- kubeadm / kubelet / kubectl ----
+    - name: Add Kubernetes repo
+      ansible.builtin.yum_repository:
+        name: kubernetes
+        description: Kubernetes
+        baseurl: "https://pkgs.k8s.io/core:/stable:/{{ k8s_minor }}/rpm/"
+        gpgcheck: true
+        gpgkey: "https://pkgs.k8s.io/core:/stable:/{{ k8s_minor }}/rpm/repodata/repomd.xml.key"
+        exclude: "kubelet kubeadm kubectl cri-tools kubernetes-cni"
+
+    - name: Install kube packages (excludes act as the version hold)
+      ansible.builtin.dnf:
+        name:
+          - "kubelet-{{ k8s_version }}"
+          - "kubeadm-{{ k8s_version }}"
+          - "kubectl-{{ k8s_version }}"
+          - cri-tools
+        state: present
+        disable_excludes: kubernetes
+
+    - name: Enable kubelet
+      ansible.builtin.systemd:
+        name: kubelet
+        enabled: true
+
+    - name: Configure crictl
+      ansible.builtin.copy:
+        dest: /etc/crictl.yaml
+        content: |
+          runtime-endpoint: unix:///run/containerd/containerd.sock
+
+  handlers:
+    - name: Restart containerd
+      ansible.builtin.systemd:
+        name: containerd
+        state: restarted
