@@ -1,0 +1,5 @@
+k8s-cp-01 | CHANGED | rc=0 >>
+NAME           SYNC STATUS   HEALTH STATUS
+gitops-test    Synced        Healthy
+root           Synced        Healthy
+storage-test   Synced        Progressing
