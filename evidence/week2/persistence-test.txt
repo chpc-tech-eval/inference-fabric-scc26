@@ -1,0 +1,53 @@
+Week 2 persistence test
+Date: 2026-10-24T15:50:20+02:00
+Run by: faraaz on k8s-cp-01.novalocal
+
+$ kubectl -n storage-test get pvc,pod -o wide
+NAME                                     STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS     VOLUMEATTRIBUTESCLASS   AGE   VOLUMEMODE
+persistentvolumeclaim/persistence-test   Bound    pvc-9c7c5600-a42a-485a-86b6-e763061652de   1Gi        RWO            cinder-default   <unset>                 42h   Filesystem
+
+NAME                   READY   STATUS    RESTARTS   AGE   IP             NODE                      NOMINATED NODE   READINESS GATES
+pod/persistence-test   1/1     Running   0          42h   10.244.1.171   k8s-worker-02.novalocal   <none>           <none>
+
+$ kubectl get pv
+NAME                                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM                           STORAGECLASS     VOLUMEATTRIBUTESCLASS   REASON   AGE
+pvc-9c7c5600-a42a-485a-86b6-e763061652de   1Gi        RWO            Delete           Bound    storage-test/persistence-test   cinder-default   <unset>                          6h58m
+
+$ kubectl -n storage-test get pod persistence-test -o jsonpath={.metadata.uid}{"\n"}
+7c747275-8a24-47c0-ac5d-82b6569a0f54
+
+$ kubectl -n argocd get application storage-test
+NAME           SYNC STATUS   HEALTH STATUS
+storage-test   Synced        Healthy
+
+$ kubectl -n storage-test exec persistence-test -- sh -c 'echo "week2-$(date +%s)" > /data/marker; cat /data/marker'
+week2-1792849888
+
+$ kubectl -n storage-test delete pod persistence-test
+pod "persistence-test" deleted from storage-test namespace
+
+$ kubectl -n storage-test wait --for=condition=Ready pod/persistence-test --timeout=300s
+pod/persistence-test condition met
+
+$ kubectl -n storage-test exec persistence-test -- cat /data/marker
+week2-1792849888
+
+$ kubectl -n storage-test get pvc,pod -o wide
+NAME                                     STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS     VOLUMEATTRIBUTESCLASS   AGE   VOLUMEMODE
+persistentvolumeclaim/persistence-test   Bound    pvc-9c7c5600-a42a-485a-86b6-e763061652de   1Gi        RWO            cinder-default   <unset>                 42h   Filesystem
+
+NAME                   READY   STATUS    RESTARTS   AGE   IP            NODE                      NOMINATED NODE   READINESS GATES
+pod/persistence-test   1/1     Running   0          44s   10.244.1.44   k8s-worker-02.novalocal   <none>           <none>
+
+$ kubectl get pv
+NAME                                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM                           STORAGECLASS     VOLUMEATTRIBUTESCLASS   REASON   AGE
+pvc-9c7c5600-a42a-485a-86b6-e763061652de   1Gi        RWO            Delete           Bound    storage-test/persistence-test   cinder-default   <unset>                          7h
+
+$ kubectl -n storage-test get pod persistence-test -o jsonpath={.metadata.uid}{"\n"}
+aec8f362-b93d-4394-8c2c-4e17a60dd93c
+
+RESULT: PASS
+- Marker week2-1792849888 identical before and after pod replacement.
+- Same PV (pvc-9c7c5600-a42a-485a-86b6-e763061652de), StorageClass cinder-default.
+- New pod UID (7c747275-... -> aec8f362-...); Argo CD self-heal recreated the pod.
+- Note: the replacement pod was scheduled on the same node (k8s-worker-02).
