@@ -5,4 +5,4 @@ metadata:
   name: gitops-proof
   namespace: gitops-test
 data:
-  message: "hello from git"
+  message: "hello from git v2"
