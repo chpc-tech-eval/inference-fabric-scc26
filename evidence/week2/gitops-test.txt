@@ -1,0 +1,20 @@
+Week 2 GitOps proof
+Date: 2026-10-24T15:58:55+02:00
+Run by: faraaz
+
+== BEFORE ==
+$ kubectl -n gitops-test get configmap gitops-proof -o jsonpath={.data.message}
+hello from git
+$ kubectl -n gitops-test exec deploy/gitops-proof -- wget -qO- http://localhost:8080/
+hello from git
+== AFTER (PR merged; no kubectl used to change anything) ==
+$ kubectl -n gitops-test get configmap gitops-proof -o jsonpath={.data.message}
+hello from git v2
+$ kubectl -n gitops-test exec deploy/gitops-proof -- wget -qO- http://localhost:8080/
+hello from git
+== PAGE, re-checked ~2 min later (kubelet refreshes mounted ConfigMaps on a delay) ==
+$ kubectl -n gitops-test exec deploy/gitops-proof -- wget -qO- http://localhost:8080/
+hello from git v2
+
+PR: https://github.com/chpc-tech-eval/inference-fabric-scc26/pull/24
+RESULT: PASS. Message changed only in Git (merged to dev); Argo CD updated the ConfigMap and the running pod served the new text, with no kubectl changes.
