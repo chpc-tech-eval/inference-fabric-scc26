@@ -1,0 +1,31 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: selfsigned-bootstrap
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: scc26-root-ca
+  namespace: cert-manager
+spec:
+  isCA: true
+  commonName: scc26-root-ca
+  secretName: scc26-root-ca-secret
+  duration: 43800h        # about 5 years
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    name: selfsigned-bootstrap
+    kind: ClusterIssuer
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: scc26-ca
+spec:
+  ca:
+    secretName: scc26-root-ca-secret
