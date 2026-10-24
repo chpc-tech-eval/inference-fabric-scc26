@@ -49,7 +49,7 @@
 
           backend workers-http
           {% for host in groups['workers'] %}
-              server {{ host }} {{ hostvars[host].ansible_host }}:80 check
+              server {{ host }} {{ hostvars[host].ansible_host }}:30080 check
           {% endfor %}
 
           frontend web-https
@@ -58,7 +58,7 @@
 
           backend workers-https
           {% for host in groups['workers'] %}
-              server {{ host }} {{ hostvars[host].ansible_host }}:443 check
+              server {{ host }} {{ hostvars[host].ansible_host }}:30443 check
           {% endfor %}
       notify: reload haproxy
 
