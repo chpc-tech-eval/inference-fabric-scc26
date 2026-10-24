@@ -15,11 +15,11 @@ spec:
           kind: DaemonSet            # one copy per node it can schedule on
         ports:
           web:
-            hostPort: 80
+            nodePort: 30080
           websecure:
-            hostPort: 443
+            nodePort: 30443
         service:
-          type: ClusterIP
+          type: NodePort
   destination:
     server: https://kubernetes.default.svc
     namespace: traefik
