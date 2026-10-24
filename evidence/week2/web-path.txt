@@ -1,0 +1,10 @@
+HTTP/2 404 
+content-type: text/plain; charset=utf-8
+x-content-type-options: nosniff
+content-length: 19
+date: Sat, 24 Oct 2026 06:40:48 GMT
+
+Oct 24 08:33:20 api-lb-01.novalocal haproxy[38127]: [WARNING]  (38127) : Server workers-https/k8s-worker-01 is UP, reason: Layer4 check passed, check duration: 1ms. 1 active and 0 backup servers online. 0 sessions requeued, 0 total in queue.
+Oct 24 08:33:20 api-lb-01.novalocal haproxy[38127]: Server workers-https/k8s-worker-01 is UP, reason: Layer4 check passed, check duration: 1ms. 1 active and 0 backup servers online. 0 sessions requeued, 0 total in queue.
+Oct 24 08:33:20 api-lb-01.novalocal haproxy[38127]: [WARNING]  (38127) : Server workers-https/k8s-worker-02 is UP, reason: Layer4 check passed, check duration: 1ms. 2 active and 0 backup servers online. 0 sessions requeued, 0 total in queue.
+Oct 24 08:33:20 api-lb-01.novalocal haproxy[38127]: Server workers-https/k8s-worker-02 is UP, reason: Layer4 check passed, check duration: 1ms. 2 active and 0 backup servers online. 0 sessions requeued, 0 total in queue.
