@@ -170,7 +170,7 @@
           Environment=FTLCONF_webserver_api_password={{ pihole_password }}
           Environment=FTLCONF_dns_listeningMode=all
           Environment="FTLCONF_dns_upstreams={{ pihole_upstream_dns }}"
-          Environment="FTLCONF_dns_hosts={% for host in groups['all'] %}{{ hostvars[host].private_ip | default(hostvars[host].ansible_host) }} {{ host }}.{{ team_domain }} {{ host }}{% if not loop.last %};{% endif %}{% endfor %}"
+          Environment="FTLCONF_dns_hosts={% for host in groups['all'] %}{{ hostvars[host].private_ip | default(hostvars[host].ansible_host) }} {{ host }}.{{ team_domain }} {{ host }}{% if not loop.last %};{% endif %}{% endfor %};10.151.0.100 grafana.{{ team_domain }};10.151.0.100 wazuh.{{ team_domain }};10.151.0.100 platform.{{ team_domain }}"
 
           [Service]
           Restart=always
