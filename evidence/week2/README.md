@@ -29,7 +29,7 @@ Status: ⬜ not yet · 🟡 received, needs checking · ✅ verified
 | `sealed-secrets.txt` | controller running; only the sealed Cinder secret in Git | CI/CD & security | ⬜ |
 | `ingress.txt` | Traefik reachable via VPN → HAProxy → workers | Infrastructure + CI/CD | ⬜ |
 | `persistence-test.txt` | the marker survived a pod replacement | Frontend & project | ✅ |
-| `gitops-test.txt` | a Git change reached the cluster (with PR link) | Frontend & project | ⬜ |
+| `gitops-test.txt` | a Git change reached the cluster (with PR link) | Frontend & project | ✅ |
 | `versions.txt` | the versions actually running | Cloud automation | ⬜ |
 
 ## How to produce each file
