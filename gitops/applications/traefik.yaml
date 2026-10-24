@@ -19,7 +19,8 @@ spec:
           websecure:
             nodePort: 30443
         service:
-          type: NodePort
+          spec:
+            type: NodePort
   destination:
     server: https://kubernetes.default.svc
     namespace: traefik
