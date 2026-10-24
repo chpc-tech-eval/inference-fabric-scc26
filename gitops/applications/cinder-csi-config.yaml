@@ -1,0 +1,20 @@
+# Deploys our own Cinder files: the sealed OpenStack credential and the StorageClasses.
+# (The cinder-csi app only installs the chart; it doesn't read this folder.)
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cinder-csi-config
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/chpc-tech-eval/inference-fabric-scc26.git
+    targetRevision: dev
+    path: gitops/resources/cinder-csi
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
