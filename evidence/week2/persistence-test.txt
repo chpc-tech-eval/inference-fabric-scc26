@@ -20,7 +20,7 @@ $ kubectl -n argocd get application storage-test
 NAME           SYNC STATUS   HEALTH STATUS
 storage-test   Synced        Healthy
 
-$ kubectl -n storage-test exec persistence-test -- sh -c echo "week2-$(date +%s)" > /data/marker; cat /data/marker
+$ kubectl -n storage-test exec persistence-test -- sh -c 'echo "week2-$(date +%s)" > /data/marker; cat /data/marker'
 week2-1792849888
 
 $ kubectl -n storage-test delete pod persistence-test
