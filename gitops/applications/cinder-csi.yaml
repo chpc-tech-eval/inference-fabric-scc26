@@ -16,7 +16,7 @@ spec:
         secret:
           enabled: true
           create: false
-          name: cinder-csi-cloud-config
+          name: cloud-config
   destination:
     server: https://kubernetes.default.svc
     namespace: kube-system
