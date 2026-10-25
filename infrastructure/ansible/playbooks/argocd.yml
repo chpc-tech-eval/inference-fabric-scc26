@@ -1,0 +1,51 @@
+---
+- name: Install Argo CD, Sealed Secrets and the root application
+  hosts: k8s-cp-01          # change to match the group/host name in your inventory.yml
+  gather_facts: false
+  become: true
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  vars:
+    argocd_version: "v3.5.0"
+    sealed_secrets_version: "v0.39.1"
+    argocd_manifest_url: "https://raw.githubusercontent.com/argoproj/argo-cd/{{ argocd_version }}/manifests/install.yaml"
+    sealed_secrets_manifest_url: "https://github.com/bitnami-labs/sealed-secrets/releases/download/{{ sealed_secrets_version }}/controller.yaml"
+    root_app_src: "{{ playbook_dir }}/../../../gitops/bootstrap/root-application.yaml"
+    root_app_dest: "/tmp/root-application.yaml"
+
+  tasks:
+    - name: Create the argocd namespace
+      ansible.builtin.shell: |
+        kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
+      changed_when: false
+
+    - name: Install Argo CD
+      ansible.builtin.command: >
+        kubectl apply -n argocd --server-side --force-conflicts
+        -f {{ argocd_manifest_url }}
+      changed_when: true
+
+    - name: Wait for the Argo CD server to be available
+      ansible.builtin.command: >
+        kubectl -n argocd rollout status deployment/argocd-server --timeout=300s
+      changed_when: false
+
+    - name: Install the Sealed Secrets controller
+      ansible.builtin.command: >
+        kubectl apply -f {{ sealed_secrets_manifest_url }}
+      changed_when: true
+
+    - name: Wait for the Sealed Secrets controller
+      ansible.builtin.command: >
+        kubectl -n kube-system rollout status deployment/sealed-secrets-controller --timeout=300s
+      changed_when: false
+
+    - name: Copy the root application to the control plane
+      ansible.builtin.copy:
+        src: "{{ root_app_src }}"
+        dest: "{{ root_app_dest }}"
+        mode: "0644"
+
+    - name: Apply the root application
+      ansible.builtin.command: kubectl apply -f {{ root_app_dest }}
+      changed_when: true

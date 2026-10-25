@@ -1,0 +1,12 @@
+# A request for 1 GiB of disk. No storageClassName, so the default (Cinder) class is used.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: persistence-test
+  namespace: storage-test
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi

@@ -1,0 +1,2 @@
+ok
+Oct 15 09:27:50 api-lb-01.novalocal haproxy[23768]: Server control-plane/k8s-cp-01 is UP, reason: Layer4 check passed, check duration: 0ms. 1 active and 0 backup servers online. 0 sessions requeued, 0 total in queue.
