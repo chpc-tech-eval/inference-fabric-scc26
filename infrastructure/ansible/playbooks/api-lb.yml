@@ -67,7 +67,7 @@
 
           backend wazuh-indexer
           {% for host in groups['workers'] %}
-              server {{ host }} {{ hostvars[host].ansible_host }}:9200 check
+              server {{ host }} {{ hostvars[host].ansible_host }}:30920 check
           {% endfor %}
 
           # HAProxy's own metrics for Prometheus
