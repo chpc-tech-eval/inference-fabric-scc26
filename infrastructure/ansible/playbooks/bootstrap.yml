@@ -25,6 +25,12 @@
         policy: targeted
         state: enforcing
 
+    - name: Kernel setting the Wazuh indexer needs
+      ansible.posix.sysctl:
+        name: vm.max_map_count
+        value: "262144"
+      when: inventory_hostname in groups['workers']
+
     - name: Add all machines to /etc/hosts
       blockinfile:
         path: /etc/hosts
