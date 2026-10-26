@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: student-platform
+  namespace: student-platform
+  annotations:
+    cert-manager.io/cluster-issuer: scc26-ca
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - platform.inference-fabric.scc26.internal
+      secretName: student-platform-tls
+  rules:
+    - host: platform.inference-fabric.scc26.internal
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: student-platform
+                port:
+                  number: 80
