@@ -1,0 +1,17 @@
+## Node DNS (resolv.conf first nameserver)
+k8s-cp-01 | CHANGED | rc=0 >>
+nameserver 10.150.0.10
+edge-01 | CHANGED | rc=0 >>
+nameserver 1.1.1.1
+k8s-worker-02 | CHANGED | rc=0 >>
+nameserver 10.150.0.10
+api-lb-01 | CHANGED | rc=0 >>
+nameserver 10.150.0.10
+k8s-worker-01 | CHANGED | rc=0 >>
+nameserver 10.150.0.10
+
+## Pod lookup of a private name
+Name:	grafana.inference-fabric.scc26.internal
+Address: 10.151.0.100
+Name:	grafana.inference-fabric.scc26.internal
+Address: 10.151.0.100
