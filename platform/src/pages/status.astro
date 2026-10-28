@@ -1,0 +1,29 @@
+---
+import { dbUp, query, init } from '../lib/db.js';
+const up = await dbUp();
+let users = null;
+if (up) {
+  try {
+    await init();
+    users = (await query('select count(*) from users')).rows[0].count;
+  } catch {}
+}
+const info = {
+  service: 'student-platform',
+  version: process.env.APP_VERSION || 'dev',
+  database: up ? 'up' : 'down',
+  registered_users: users ?? 'n/a',
+  uptime_seconds: Math.round(process.uptime()),
+  checked_at: new Date().toISOString(),
+};
+---
+<html lang="en">
+<head><meta charset="utf-8" /><title>Status</title></head>
+<body>
+<h1>Platform status</h1>
+<table>
+{Object.entries(info).map(([k, v]) => <tr><td><strong>{k}</strong></td><td>{String(v)}</td></tr>)}
+</table>
+<p><a href="/">Home</a></p>
+</body>
+</html>

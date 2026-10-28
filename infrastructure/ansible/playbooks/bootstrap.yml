@@ -25,6 +25,19 @@
         policy: targeted
         state: enforcing
 
+    - name: Kernel setting the Wazuh indexer needs
+      ansible.posix.sysctl:
+        name: vm.max_map_count
+        value: "262144"
+      when: inventory_hostname in groups['workers']
+
+    - name: Let NetworkManager manage DNS (cloud-init froze resolv.conf at first boot)
+      lineinfile:
+        path: /etc/NetworkManager/conf.d/99-cloud-init.conf
+        regexp: '^dns\s*=\s*none'
+        state: absent
+      notify: reload networkmanager
+
     - name: Add all machines to /etc/hosts
       blockinfile:
         path: /etc/hosts
@@ -75,3 +88,8 @@
       systemd:
         name: sshd
         state: restarted
+
+    - name: reload networkmanager
+      systemd:
+        name: NetworkManager
+        state: reloaded
