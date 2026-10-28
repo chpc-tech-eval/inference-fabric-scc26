@@ -18,6 +18,20 @@ spec:
           image: wazuh/wazuh-dashboard:4.7.0
           ports:
             - containerPort: 5601
+          env:
+            # where the indexer is (our Service, inside the cluster)
+            - name: INDEXER_URL
+              value: https://wazuh-indexer.wazuh.svc.cluster.local:9200
+            # admin login for the indexer
+            - name: INDEXER_USERNAME
+              valueFrom: { secretKeyRef: { name: wazuh-indexer-creds, key: INDEXER_USERNAME } }
+            - name: INDEXER_PASSWORD
+              valueFrom: { secretKeyRef: { name: wazuh-indexer-creds, key: INDEXER_PASSWORD } }
+            # the dashboard's own service login (kibanaserver)
+            - name: DASHBOARD_USERNAME
+              valueFrom: { secretKeyRef: { name: wazuh-indexer-creds, key: DASHBOARD_USERNAME } }
+            - name: DASHBOARD_PASSWORD
+              valueFrom: { secretKeyRef: { name: wazuh-indexer-creds, key: DASHBOARD_PASSWORD } }
           resources:
             requests:
               memory: "512Mi"
