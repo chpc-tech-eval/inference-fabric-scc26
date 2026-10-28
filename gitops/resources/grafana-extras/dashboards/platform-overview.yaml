@@ -1,0 +1,98 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dashboard-platform-overview
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  platform-overview.json: |
+    {
+      "title": "Platform Overview",
+      "uid": "platform-overview",
+      "timezone": "utc",
+      "refresh": "30s",
+      "schemaVersion": 39,
+      "version": 1,
+      "time": { "from": "now-3h", "to": "now" },
+      "tags": ["week3", "overview"],
+      "panels": [
+        {
+          "id": 1, "type": "stat", "title": "Scrape targets up",
+          "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [ { "refId": "A", "expr": "sum(up)", "instant": true } ],
+          "fieldConfig": { "defaults": { "thresholds": { "mode": "absolute", "steps": [ { "color": "red", "value": null }, { "color": "green", "value": 1 } ] } }, "overrides": [] }
+        },
+        {
+          "id": 2, "type": "stat", "title": "Scrape targets down",
+          "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [ { "refId": "A", "expr": "count(up == 0) or vector(0)", "instant": true } ],
+          "fieldConfig": { "defaults": { "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "red", "value": 1 } ] } }, "overrides": [] }
+        },
+        {
+          "id": 3, "type": "stat", "title": "Kubernetes nodes Ready",
+          "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [ { "refId": "A", "expr": "sum(kube_node_status_condition{condition=\"Ready\",status=\"true\"})", "instant": true } ],
+          "fieldConfig": { "defaults": { "thresholds": { "mode": "absolute", "steps": [ { "color": "red", "value": null }, { "color": "green", "value": 1 } ] } }, "overrides": [] }
+        },
+        {
+          "id": 4, "type": "stat", "title": "Platform pods Running",
+          "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [ { "refId": "A", "expr": "sum(kube_pod_status_phase{namespace=\"student-platform\",phase=\"Running\"}) or vector(0)", "instant": true } ],
+          "fieldConfig": { "defaults": { "thresholds": { "mode": "absolute", "steps": [ { "color": "red", "value": null }, { "color": "green", "value": 1 } ] } }, "overrides": [] }
+        },
+        {
+          "id": 5, "type": "timeseries", "title": "Node CPU used (%)",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [ { "refId": "A", "legendFormat": "{{instance}}", "expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)" } ],
+          "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100 }, "overrides": [] }
+        },
+        {
+          "id": 6, "type": "timeseries", "title": "Node memory used (%)",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [ { "refId": "A", "legendFormat": "{{instance}}", "expr": "(1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100" } ],
+          "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100 }, "overrides": [] }
+        },
+        {
+          "id": 7, "type": "timeseries", "title": "Node disk used (%)",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [ { "refId": "A", "legendFormat": "{{instance}} {{mountpoint}}", "expr": "100 - (node_filesystem_avail_bytes{fstype!~\"tmpfs|overlay|squashfs|ramfs|fuse.*\"} / node_filesystem_size_bytes{fstype!~\"tmpfs|overlay|squashfs|ramfs|fuse.*\"} * 100)" } ],
+          "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100 }, "overrides": [] }
+        },
+        {
+          "id": 8, "type": "timeseries", "title": "Pods by phase (whole cluster)",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [ { "refId": "A", "legendFormat": "{{phase}}", "expr": "sum by (phase) (kube_pod_status_phase)" } ],
+          "fieldConfig": { "defaults": { "unit": "short", "min": 0 }, "overrides": [] }
+        },
+        {
+          "id": 9, "type": "timeseries", "title": "Platform: available replicas",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 20 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [ { "refId": "A", "legendFormat": "{{deployment}}", "expr": "kube_deployment_status_replicas_available{namespace=\"student-platform\"}" } ],
+          "fieldConfig": { "defaults": { "unit": "short", "min": 0 }, "overrides": [] }
+        },
+        {
+          "id": 10, "type": "timeseries", "title": "Platform: container restarts (last 1h)",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 20 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [ { "refId": "A", "legendFormat": "{{pod}}", "expr": "increase(kube_pod_container_status_restarts_total{namespace=\"student-platform\"}[1h])" } ],
+          "fieldConfig": { "defaults": { "unit": "short", "min": 0 }, "overrides": [] }
+        },
+        {
+          "id": 11, "type": "timeseries", "title": "HAProxy scrape target (1 = up)",
+          "gridPos": { "h": 6, "w": 24, "x": 0, "y": 28 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [ { "refId": "A", "legendFormat": "{{instance}}", "expr": "up{job=\"haproxy\"}" } ],
+          "fieldConfig": { "defaults": { "unit": "short", "min": 0, "max": 1 }, "overrides": [] }
+        }
+      ]
+    }

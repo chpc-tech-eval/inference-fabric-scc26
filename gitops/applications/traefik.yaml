@@ -18,6 +18,13 @@ spec:
             nodePort: 30080
           websecure:
             nodePort: 30443
+          wazuh-indexer:
+            port: 9200
+            expose:
+              default: true
+            exposedPort: 9200
+            protocol: TCP
+            nodePort: 30920
         service:
           spec:
             type: NodePort

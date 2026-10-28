@@ -9,7 +9,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/chpc-tech-eval/inference-fabric-scc26.git
-    targetRevision: HEAD
+    targetRevision: dev
     path: gitops/resources/wazuh
   destination:
     server: https://kubernetes.default.svc

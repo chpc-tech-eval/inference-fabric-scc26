@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: student-platform
+  namespace: student-platform
+  labels:
+    app: student-platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: student-platform
+  template:
+    metadata:
+      labels:
+        app: student-platform
+    spec:
+      imagePullSecrets:
+        - name: ghcr-secret
+      containers:
+        - name: platform
+          image: ghcr.io/chpc-tech-eval/inference-fabric-scc26/student-platform:sha-8eef9300677c974d16c4decac2279078b97a0397
+          ports:
+            - containerPort: 4321
+          env:
+            - name: TEAM_NAME
+              value: "SCC26 Team"
+            - name: PROJECT_NAME
+              value: "Inference Fabric"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: student-platform-db
+                  key: DATABASE_URL
+            - name: SESSION_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: student-platform-app
+                  key: SESSION_SECRET
+            - name: ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: student-platform-app
+                  key: ADMIN_PASSWORD
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 4321
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 4321
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests: {cpu: 50m, memory: 128Mi}
+            limits: {cpu: 500m, memory: 384Mi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 1000
+            capabilities:
+              drop: ["ALL"]

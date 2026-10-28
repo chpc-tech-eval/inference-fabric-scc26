@@ -1,0 +1,19 @@
+{
+  "name": "student-platform",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "start": "node ./dist/server/entry.mjs",
+    "lint": "node --check astro.config.mjs",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@astrojs/node": "^9.0.0",
+    "astro": "^5.0.0",
+    "bcryptjs": "^2.4.3",
+    "pg": "^8.11.0"
+  }
+}
