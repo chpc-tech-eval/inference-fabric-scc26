@@ -1,0 +1,39 @@
+# CoreDNS settings for our cluster.
+# The second block sends our private names (*.inference-fabric.scc26.internal) straight to Pi-hole,
+# so pods always resolve them. Everything else uses the nodes' normal DNS.
+#
+# Apply after the cluster is created (on k8s-cp-01):
+#   kubectl apply -f coredns-configmap.yaml
+#   kubectl -n kube-system rollout restart deployment coredns
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: coredns
+  namespace: kube-system
+data:
+  Corefile: |
+    .:53 {
+        errors
+        health {
+           lameduck 5s
+        }
+        ready
+        kubernetes cluster.local in-addr.arpa ip6.arpa {
+           pods insecure
+           fallthrough in-addr.arpa ip6.arpa
+           ttl 30
+        }
+        prometheus :9153
+        forward . /etc/resolv.conf {
+           max_concurrent 1000
+        }
+        cache 30
+        loop
+        reload
+        loadbalance
+    }
+    inference-fabric.scc26.internal:53 {
+        errors
+        cache 30
+        forward . 10.150.0.10
+    }
