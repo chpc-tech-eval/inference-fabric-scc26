@@ -15,6 +15,8 @@ spec:
       labels:
         app: student-platform
     spec:
+      imagePullSecrets:
+        - name: ghcr-secret
       containers:
         - name: platform
           image: ghcr.io/chpc-tech-eval/inference-fabric-scc26/student-platform:sha-8eef9300677c974d16c4decac2279078b97a0397
