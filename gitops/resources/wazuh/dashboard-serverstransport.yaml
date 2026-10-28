@@ -1,0 +1,11 @@
+# The dashboard uses the image's built-in (self-signed) certificate, which Traefik
+# doesn't trust by default. Traffic between Traefik and the dashboard stays encrypted
+# inside the cluster; we just skip checking that certificate.
+# Later hardening: trust our own CA instead (rootCAs) and remove insecureSkipVerify.
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransport
+metadata:
+  name: wazuh-dashboard-transport
+  namespace: wazuh
+spec:
+  insecureSkipVerify: true
