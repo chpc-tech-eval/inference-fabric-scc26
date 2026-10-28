@@ -18,7 +18,7 @@ spec:
       containers:
         - name: platform
           # REPLACE image: use the sha- tag from CI/CD
-          image: ghcr.io/chpc-tech-eval/inference-fabric-scc26/student-platform:sha-REPLACE
+          image: ghcr.io/chpc-tech-eval/inference-fabric-scc26/student-platform:sha-8eef9300677c974d16c4decac2279078b97a0397
           ports:
             - containerPort: 4321
           env:
