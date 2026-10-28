@@ -10,5 +10,6 @@ resources:
   - dashboard-config.yaml
   - dashboard-deployment.yaml
   - dashboard-service.yaml
+  - dashboard-serverstransport.yaml
   - dashboard-ingress.yaml
   - wazuh-sealedsecret.yaml

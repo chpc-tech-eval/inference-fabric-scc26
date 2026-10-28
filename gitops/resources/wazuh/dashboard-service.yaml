@@ -3,6 +3,11 @@ kind: Service
 metadata:
   name: wazuh-dashboard
   namespace: wazuh
+  annotations:
+    # the dashboard only speaks HTTPS, so Traefik must use HTTPS to reach it
+    traefik.ingress.kubernetes.io/service.serversscheme: https
+    # use the transport below (format: <namespace>-<name>@kubernetescrd)
+    traefik.ingress.kubernetes.io/service.serverstransport: wazuh-wazuh-dashboard-transport@kubernetescrd
 spec:
   type: ClusterIP
   selector:
