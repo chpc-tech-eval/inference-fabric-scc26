@@ -1,0 +1,31 @@
+# Installs the Wazuh agent on every machine except edge-01
+# Agents send security events to the manager on edge-01
+
+- name: Install Wazuh agents
+  hosts: all:!edge_nodes
+  become: true
+
+  vars:
+    wazuh_manager_ip: "{{ hostvars['edge-01'].private_ip }}"
+
+  tasks:
+    - name: Add the Wazuh package repo
+      yum_repository:
+        name: wazuh
+        description: Wazuh repository
+        baseurl: https://packages.wazuh.com/4.x/yum/
+        gpgkey: https://packages.wazuh.com/key/GPG-KEY-WAZUH
+        gpgcheck: true
+
+    - name: Install the agent, pointed at the manager
+      dnf:
+        name: wazuh-agent
+        state: present
+      environment:
+        WAZUH_MANAGER: "{{ wazuh_manager_ip }}"    # the installer writes this into the agent's config
+
+    - name: Start the agent (it enrols with the manager by itself)
+      systemd:
+        name: wazuh-agent
+        enabled: true
+        state: started

@@ -46,7 +46,7 @@ resource "openstack_networking_subnet_v2" "net" {
   network_id      = openstack_networking_network_v2.net[each.key].id
   cidr            = each.value              # Address Range
   gateway_ip      = cidrhost(each.value, 1) # Router's Address
-  dns_nameservers = var.dns_nameservers
+  dns_nameservers = each.key == "k8s" ? [local.edge_ip, "1.1.1.1"] : var.dns_nameservers
 
   # Ensuring no automatic grabbing of 0.10 or .100
   allocation_pool {
@@ -82,9 +82,7 @@ locals {
   M = var.mgmt_cidr
   K = var.k8s_cidr
 
-  # Dear lord this took so long... 
   # Jist is: Accepting traffic on different networks to different ports and specifying comms protocol
-  # Will need to add rules for kubernetes
   base_rules = {
     # name               = [security group,      protocol, from,  to,    source]
     edge-dns-udp-mgmt    = ["edge", "udp", 53, 53, local.M]
@@ -116,6 +114,14 @@ locals {
     worker-nodeports = ["k8s-worker", "tcp", 30000, 32767, local.K]
     cp-icmp-k8s      = ["k8s-control-plane", "icmp", 0, 0, local.K]
     worker-icmp-k8s  = ["k8s-worker", "icmp", 0, 0, local.K]
+    # ---- Monitoring and security ----
+    cp-node-exporter      = ["k8s-control-plane", "tcp", 9100, 9100, local.K]
+    worker-node-exporter  = ["k8s-worker", "tcp", 9100, 9100, local.K]
+    api-lb-metrics        = ["api-lb", "tcp", 8404, 8404, local.K]
+    edge-wazuh-agents     = ["edge", "tcp", 1514, 1515, local.K]
+    edge-wazuh-api        = ["edge", "tcp", 55000, 55000, local.K]
+    api-lb-indexer-edge   = ["api-lb", "tcp", 9200, 9200, "${local.edge_ip}/32"]
+    worker-indexer-lb     = ["k8s-worker", "tcp", 9200, 9200, "${local.api_lb_ip}/32"]
   }
 
   # Temporary public SSH to edge-01 (disappears when enable_bootstrap_ssh = false)

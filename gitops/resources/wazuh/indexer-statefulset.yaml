@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: wazuh-indexer
+  namespace: wazuh
+spec:
+  serviceName: wazuh-indexer
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wazuh-indexer
+  template:
+    metadata:
+      labels:
+        app: wazuh-indexer
+    spec:
+      securityContext:
+        fsGroup: 1000 
+      containers:
+        - name: wazuh-indexer
+          image: wazuh/wazuh-indexer:4.7.0
+          resources:
+            requests:
+              memory: "2Gi"
+              cpu: "500m"
+            limits:
+              memory: "3Gi"
+              cpu: "2"
+          ports:
+            - containerPort: 9200
+              name: api
+          volumeMounts:
+            - name: wazuh-indexer-data
+              mountPath: /var/lib/wazuh-indexer
+  volumeClaimTemplates:
+    - metadata:
+        name: wazuh-indexer-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 20Gi

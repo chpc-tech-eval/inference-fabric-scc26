@@ -1,0 +1,16 @@
+2026 Oct 24 09:55:04 (k8s-cp-01.novalocal) any->journald
+Rule: 5710 (level 5) -> 'sshd: Attempt to login using a non-existent user'
+Src IP: 10.150.0.10
+Src Port: 60224
+Oct 24 07:55:04 k8s-cp-01.novalocal sshd-session[296288]: Invalid user nosuchuser from 10.150.0.10 port 60224
+
+** Alert 1792828506.3252768: - syslog,sshd,authentication_failed,gdpr_IV_35.7.d,gdpr_IV_32.2,gpg13_7.1,hipaa_164.312.b,invalid_login,nist_800_53_AU.14,nist_800_53_AC.7,nist_800_53_AU.6,pci_dss_10.2.4,pci_dss_10.2.5,pci_dss_10.6.1,tsc_CC6.1,tsc_CC6.8,tsc_CC7.2,tsc_CC7.3,
+2026 Oct 24 09:55:06 (k8s-cp-01.novalocal) any->journald
+Rule: 5710 (level 5) -> 'sshd: Attempt to login using a non-existent user'
+Src IP: 10.150.0.10
+Src Port: 60169
+Oct 24 07:55:04 k8s-cp-01.novalocal sshd-session[296290]: Invalid user nosuchuser from 10.150.0.10 port 60169
+
+** Alert 1792828567.3253318: - syslog,sshd,authentication_success,gdpr_IV_32.2,gpg13_7.1,gpg13_7.2,hipaa_164.312.b,nist_800_53_AU.14,nist_800_53_AC.7,pci_dss_10.2.5,tsc_CC6.8,tsc_CC7.2,tsc_CC7.3,
+2026 Oct 24 09:56:07 edge-01.novalocal->journald
+Rule: 5715 (level 3) -> 'sshd: authentication success.'

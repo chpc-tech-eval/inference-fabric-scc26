@@ -1,0 +1,21 @@
+server:
+  retention: 15d
+  persistentVolume:
+    enabled: true
+    size: 10Gi
+    # storageClass: <only if the default isn't Cinder>
+
+prometheus-node-exporter:
+  enabled: true
+kube-state-metrics:
+  enabled: true
+
+alertmanager:
+  enabled: false
+prometheus-pushgateway:
+  enabled: false
+
+extraScrapeConfigs: |
+  - job_name: haproxy
+    static_configs:
+      - targets: ['api-lb-01:8404']

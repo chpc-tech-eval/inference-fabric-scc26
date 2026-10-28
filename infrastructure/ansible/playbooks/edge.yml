@@ -60,6 +60,9 @@
 
               # pi-hole web page from the vpn
               tcp dport { 80, 443 } ip saddr $VPN accept
+
+              # wazuh agents and the dashboard's API calls
+              tcp dport { 1514, 1515, 55000 } ip saddr { $MGMT, $K8S, $VPN } accept
             }
 
             chain forward {
@@ -166,8 +169,9 @@
           Environment=TZ=Africa/Johannesburg
           Environment=FTLCONF_webserver_api_password={{ pihole_password }}
           Environment=FTLCONF_dns_listeningMode=all
+          Environment=FTLCONF_dns_rateLimit_count=0
           Environment="FTLCONF_dns_upstreams={{ pihole_upstream_dns }}"
-          Environment="FTLCONF_dns_hosts={% for host in groups['all'] %}{{ hostvars[host].private_ip | default(hostvars[host].ansible_host) }} {{ host }}.{{ team_domain }} {{ host }}{% if not loop.last %};{% endif %}{% endfor %}"
+          Environment="FTLCONF_dns_hosts={% for host in groups['all'] %}{{ hostvars[host].private_ip | default(hostvars[host].ansible_host) }} {{ host }}.{{ team_domain }} {{ host }}{% if not loop.last %};{% endif %}{% endfor %};10.151.0.100 grafana.{{ team_domain }};10.151.0.100 wazuh.{{ team_domain }};10.151.0.100 platform.{{ team_domain }}"
 
           [Service]
           Restart=always
@@ -185,6 +189,92 @@
         daemon_reload: true
         state: started
       tags: pihole
+    # ---------------- wazuh manager ----------------
+    - name: Add the Wazuh package repo
+      yum_repository:
+        name: wazuh
+        description: Wazuh repository
+        baseurl: https://packages.wazuh.com/4.x/yum/
+        gpgkey: https://packages.wazuh.com/key/GPG-KEY-WAZUH
+        gpgcheck: true
+      tags: wazuh
+
+    - name: Install the Wazuh manager
+      dnf:
+        name: wazuh-manager
+        state: present
+      tags: wazuh
+
+    - name: Let the manager read Suricata's alerts
+      blockinfile:
+        path: /var/ossec/etc/ossec.conf
+        marker: "<!-- {mark} SCC26 SURICATA -->"
+        block: |
+          <ossec_config>
+            <localfile>
+              <log_format>json</log_format>
+              <location>/var/log/suricata/eve.json</location>
+            </localfile>
+          </ossec_config>
+      notify: restart wazuh-manager
+      tags: wazuh
+
+    - name: Start the Wazuh manager
+      systemd:
+        name: wazuh-manager
+        enabled: true
+        state: started
+      tags: wazuh
+
+    # ---------------- suricata ----------------
+    - name: Add EPEL (where Suricata comes from)
+      dnf:
+        name: epel-release
+        state: present
+      tags: suricata
+
+    - name: Install Suricata
+      dnf:
+        name: suricata
+        state: present
+      tags: suricata
+
+    - name: Watch edge-01's network card (IDS mode - watching, not blocking)
+      lineinfile:
+        path: /etc/sysconfig/suricata
+        regexp: '^OPTIONS='
+        line: 'OPTIONS="-i {{ ansible_facts.default_ipv4.interface }} --user suricata"'
+      notify: restart suricata
+      tags: suricata
+
+    - name: Download the detection rules
+      command: suricata-update
+      args:
+        creates: /var/lib/suricata/rules/suricata.rules
+      notify: restart suricata
+      tags: suricata
+
+    - name: Check the Suricata config is valid
+      command: suricata -T -c /etc/suricata/suricata.yaml
+      changed_when: false
+      tags: suricata
+
+    - name: Let Suricata write its own log files
+      file:
+        path: /var/log/suricata
+        state: directory
+        owner: suricata
+        group: suricata
+        recurse: true
+      notify: restart suricata
+      tags: suricata
+      
+    - name: Start Suricata
+      systemd:
+        name: suricata
+        enabled: true
+        state: started
+      tags: suricata
 
   handlers:
     - name: reload nftables
@@ -201,4 +291,14 @@
       systemd:
         name: pihole
         daemon_reload: true
+        state: restarted
+    
+    - name: restart wazuh-manager
+      systemd:
+        name: wazuh-manager
+        state: restarted
+
+    - name: restart suricata
+      systemd:
+        name: suricata
         state: restarted

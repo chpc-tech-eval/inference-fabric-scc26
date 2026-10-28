@@ -1,0 +1,51 @@
+---
+import { currentUser } from '../lib/auth.js';
+let user = null, dbError = false;
+try { user = await currentUser(Astro.cookies); } catch { dbError = true; }
+const team = process.env.TEAM_NAME || 'SCC26 Team';
+const project = process.env.PROJECT_NAME || 'Inference Fabric';
+const q = Astro.url.searchParams;
+---
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Student Project Platform</title>
+<style>
+body{font-family:system-ui,sans-serif;max-width:640px;margin:3rem auto;padding:0 1rem}
+input,button{padding:.5rem;margin:.25rem 0;display:block}
+.err{color:#b00}
+.ok{color:#080}
+</style>
+</head>
+<body>
+<h1>{team}</h1>
+<p>Project: <strong>{project}</strong> · <a href="/status">status</a></p>
+{dbError && <p class="err">Database unavailable.</p>}
+{q.get('error') && <p class="err">Wrong username or password.</p>}
+{q.get('msg') === 'created' && <p class="ok">User created.</p>}
+{q.get('msg') === 'invalid' && <p class="err">Username 3-32 chars (a-z 0-9 _ . -), password 8+.</p>}
+{user ? (
+<div>
+<h2>Welcome, {user.display_name}</h2>
+<p>Username: {user.username}{user.is_admin ? ' (admin)' : ''}</p>
+<form method="post" action="/api/logout"><button>Log out</button></form>
+{user.is_admin && (
+<form method="post" action="/api/users">
+<h3>Create user</h3>
+<input name="username" placeholder="username" required />
+<input name="display_name" placeholder="display name" />
+<input name="password" type="password" placeholder="password (8+)" required />
+<button>Create</button>
+</form>
+)}
+</div>
+) : (
+<form method="post" action="/api/login">
+<h2>Log in</h2>
+<input name="username" placeholder="username" required />
+<input name="password" type="password" placeholder="password" required />
+<button>Log in</button>
+</form>
+)}
+</body>
+</html>
