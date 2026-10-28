@@ -15,7 +15,7 @@ spec:
         app: wazuh-indexer
     spec:
       securityContext:
-        fsGroup: 1000 
+        fsGroup: 1000
       containers:
         - name: wazuh-indexer
           image: wazuh/wazuh-indexer:4.7.0
@@ -32,6 +32,12 @@ spec:
           volumeMounts:
             - name: wazuh-indexer-data
               mountPath: /var/lib/wazuh-indexer
+            - name: indexer-certs
+              mountPath: /usr/share/wazuh-indexer/config/certs
+      volumes:
+        - name: indexer-certs
+          secret:
+            secretName: wazuh-indexer-creds
   volumeClaimTemplates:
     - metadata:
         name: wazuh-indexer-data
