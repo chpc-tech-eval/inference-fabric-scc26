@@ -1,0 +1,14 @@
+schema_version: '1.0'
+run_id: 20261028T133300Z
+project: inference-fabric-scc26
+started_at: 2026-10-28T13:33:00Z
+finished_at: 2026-10-28T13:44:00Z
+source:
+  repository: https://github.com/chpc-tech-eval/inference-fabric-scc26
+  commit: 6f42d5f864138bc2e07acc2f948bd55e12b03ad0
+  dirty: false
+software:
+  images:
+    student_platform: ghcr.io/chpc-tech-eval/inference-fabric-scc26/student-platform@sha256:d2bd815cc55ff2381d063f9b7ad081a8339f426422c4737259a307ace2922bc7
+execution:
+  location: sebowa-kubernetes
