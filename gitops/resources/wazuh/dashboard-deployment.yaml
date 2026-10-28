@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: wazuh-dashboard
-          image: wazuh/wazuh-dashboard:4.7.0
+          image: wazuh/wazuh-dashboard:4.14.9
           ports:
             - containerPort: 5601
           env:
@@ -29,6 +29,13 @@ spec:
               valueFrom: { secretKeyRef: { name: wazuh-indexer-creds, key: DASHBOARD_USERNAME } }
             - name: DASHBOARD_PASSWORD
               valueFrom: { secretKeyRef: { name: wazuh-indexer-creds, key: DASHBOARD_PASSWORD } }
+            # the Wazuh manager's API on edge-01
+            - name: WAZUH_API_URL
+              value: https://10.150.0.10
+            - name: API_USERNAME
+              valueFrom: { secretKeyRef: { name: wazuh-indexer-creds, key: API_USERNAME } }
+            - name: API_PASSWORD
+              valueFrom: { secretKeyRef: { name: wazuh-indexer-creds, key: API_PASSWORD } }  
           volumeMounts:
             # replace only this one file; everything else in config/ stays from the image
             - name: dashboard-config

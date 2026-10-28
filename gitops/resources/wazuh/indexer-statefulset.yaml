@@ -18,7 +18,7 @@ spec:
         fsGroup: 1000          # lets the indexer write its Cinder disk
       containers:
         - name: wazuh-indexer
-          image: wazuh/wazuh-indexer:4.7.0
+          image: wazuh/wazuh-indexer:4.14.9
           resources:
             requests:
               memory: "2Gi"
