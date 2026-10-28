@@ -46,7 +46,7 @@ resource "openstack_networking_subnet_v2" "net" {
   network_id      = openstack_networking_network_v2.net[each.key].id
   cidr            = each.value              # Address Range
   gateway_ip      = cidrhost(each.value, 1) # Router's Address
-  dns_nameservers = var.dns_nameservers
+  dns_nameservers = each.key == "k8s" ? [local.edge_ip, "1.1.1.1"] : var.dns_nameservers
 
   # Ensuring no automatic grabbing of 0.10 or .100
   allocation_pool {
