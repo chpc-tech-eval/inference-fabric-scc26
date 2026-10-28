@@ -1,0 +1,21 @@
+# The dashboard's settings file. Identical to the image's default, except opensearch.hosts,
+# which points at our indexer Service instead of Docker's "wazuh.indexer" name.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wazuh-dashboard-config
+  namespace: wazuh
+data:
+  opensearch_dashboards.yml: |
+    server.host: 0.0.0.0
+    server.port: 5601
+    opensearch.hosts: https://wazuh-indexer.wazuh.svc.cluster.local:9200
+    opensearch.ssl.verificationMode: none
+    opensearch.requestHeadersWhitelist: [ authorization,securitytenant ]
+    opensearch_security.multitenancy.enabled: false
+    opensearch_security.readonly_mode.roles: ["kibana_read_only"]
+    server.ssl.enabled: true
+    server.ssl.key: "/usr/share/wazuh-dashboard/config/certs/dashboard-key.pem"
+    server.ssl.certificate: "/usr/share/wazuh-dashboard/config/certs/dashboard.pem"
+    opensearch.ssl.certificateAuthorities: ["/usr/share/wazuh-dashboard/config/certs/root-ca.pem"]
+    uiSettings.overrides.defaultRoute: /app/wazuh
