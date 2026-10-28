@@ -201,7 +201,7 @@
 
     - name: Install the Wazuh manager
       dnf:
-        name: wazuh-manager
+        name: wazuh-manager-4.14.9
         state: present
       tags: wazuh
 
@@ -300,9 +300,10 @@
 
     - name: Download Wazuh's alerts template
       get_url:
-        url: https://raw.githubusercontent.com/wazuh/wazuh/v4.7.0/extensions/elasticsearch/7.x/wazuh-template.json
+        url: https://raw.githubusercontent.com/wazuh/wazuh/v4.14.9/extensions/elasticsearch/7.x/wazuh-template.json
         dest: /etc/filebeat/wazuh-template.json
         mode: "0644"
+        force: true
       notify: restart filebeat
       tags: filebeat
 
@@ -330,6 +331,7 @@
           setup.template.json.enabled: true
           setup.template.json.path: /etc/filebeat/wazuh-template.json
           setup.template.json.name: wazuh
+          setup.template.overwrite: true
           setup.ilm.overwrite: true
           setup.ilm.enabled: false
           filebeat.modules:
