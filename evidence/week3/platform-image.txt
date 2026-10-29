@@ -1,0 +1,7 @@
+Captured: 2026-10-29T07:58:08Z
+
+$ image in the Deployment
+ghcr.io/chpc-tech-eval/inference-fabric-scc26/student-platform:sha-8eef9300677c974d16c4decac2279078b97a0397
+
+$ image actually running (digest)
+student-platform-7b969b8fdc-2lxdn  ghcr.io/chpc-tech-eval/inference-fabric-scc26/student-platform@sha256:d2bd815cc55ff2381d063f9b7ad081a8339f426422c4737259a307ace2922bc7

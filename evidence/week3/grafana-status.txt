@@ -1,0 +1,35 @@
+Captured: 2026-10-29T07:57:38Z
+
+$ kubectl -n argocd get applications
+NAME                  SYNC STATUS   HEALTH STATUS
+cert-manager          Synced        Healthy
+cert-manager-config   Synced        Healthy
+cinder-csi            Synced        Healthy
+cinder-csi-config     Synced        Healthy
+gitops-test           Synced        Healthy
+grafana               Synced        Progressing
+prometheus            Synced        Healthy
+root                  Synced        Healthy
+storage-test          Synced        Healthy
+student-platform      Synced        Progressing
+traefik               Synced        Healthy
+wazuh                 Synced        Progressing
+
+$ kubectl -n monitoring get pods,pvc,ingress,certificate
+NAME                                                 READY   STATUS    RESTARTS      AGE
+pod/grafana-7dd4b4c986-wp2cb                         2/2     Running   0             15m
+pod/prometheus-kube-state-metrics-86f6b846bf-tz2mv   1/1     Running   4 (22h ago)   23h
+pod/prometheus-prometheus-node-exporter-475qm        1/1     Running   1 (22h ago)   23h
+pod/prometheus-prometheus-node-exporter-ngnr5        1/1     Running   1 (22h ago)   23h
+pod/prometheus-prometheus-node-exporter-v56p5        1/1     Running   1 (23h ago)   23h
+pod/prometheus-server-fdbcdc58c-mxbt5                2/2     Running   2 (23h ago)   23h
+
+NAME                                      STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS     VOLUMEATTRIBUTESCLASS   AGE
+persistentvolumeclaim/grafana             Bound    pvc-0909266e-9c96-424e-9519-1ec0f948376b   2Gi        RWO            cinder-default   <unset>                 15m
+persistentvolumeclaim/prometheus-server   Bound    pvc-57e8a37c-a0c1-4186-8375-6eee14f47d60   10Gi       RWO            cinder-default   <unset>                 23h
+
+NAME                                CLASS     HOSTS                                     ADDRESS   PORTS     AGE
+ingress.networking.k8s.io/grafana   traefik   grafana.inference-fabric.scc26.internal             80, 443   15m
+
+NAME                                      READY   SECRET        AGE
+certificate.cert-manager.io/grafana-tls   True    grafana-tls   15m
