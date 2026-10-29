@@ -38,6 +38,12 @@
       ansible.builtin.command: kubeadm init --config /root/kubeadm-config.yaml
       when: not admin_conf.stat.exists
 
+    - name: Apply CoreDNS custom ConfigMap for internal domain routing
+      ansible.builtin.command:
+        cmd: kubectl apply -f infrastructure/kubernetes/coredns-configmap.yaml
+      environment:
+        KUBECONFIG: /etc/kubernetes/admin.conf
+
     - name: Create kubeconfig for the admin user (on k8s-cp-01 only)
       ansible.builtin.shell: |
         mkdir -p /home/{{ admin_user }}/.kube

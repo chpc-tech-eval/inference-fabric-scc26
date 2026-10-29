@@ -1,0 +1,26 @@
+Captured: 2026-10-29T07:57:23Z
+
+$ kubectl -n monitoring get pods,pvc,svc
+NAME                                                 READY   STATUS    RESTARTS      AGE
+pod/grafana-7dd4b4c986-wp2cb                         2/2     Running   0             15m
+pod/prometheus-kube-state-metrics-86f6b846bf-tz2mv   1/1     Running   4 (22h ago)   23h
+pod/prometheus-prometheus-node-exporter-475qm        1/1     Running   1 (22h ago)   23h
+pod/prometheus-prometheus-node-exporter-ngnr5        1/1     Running   1 (22h ago)   23h
+pod/prometheus-prometheus-node-exporter-v56p5        1/1     Running   1 (23h ago)   23h
+pod/prometheus-server-fdbcdc58c-mxbt5                2/2     Running   2 (23h ago)   23h
+
+NAME                                      STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS     VOLUMEATTRIBUTESCLASS   AGE
+persistentvolumeclaim/grafana             Bound    pvc-0909266e-9c96-424e-9519-1ec0f948376b   2Gi        RWO            cinder-default   <unset>                 15m
+persistentvolumeclaim/prometheus-server   Bound    pvc-57e8a37c-a0c1-4186-8375-6eee14f47d60   10Gi       RWO            cinder-default   <unset>                 23h
+
+NAME                                          TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
+service/grafana                               ClusterIP   <redacted-ip>     <none>        80/TCP     15m
+service/prometheus-kube-state-metrics         ClusterIP   <redacted-ip>   <none>        8080/TCP   23h
+service/prometheus-prometheus-node-exporter   ClusterIP   <redacted-ip>     <none>        9100/TCP   23h
+service/prometheus-server                     ClusterIP   <redacted-ip>     <none>        80/TCP     23h
+
+$ query: up == 0   (targets that are down)
+{"status":"success","data":{"resultType":"vector","result":[{"metric":{"__name__":"up","app_kubernetes_io_managed_by":"Helm","app_kubernetes_io_name":"cilium-envoy","app_kubernetes_io_part_of":"cilium","helm_sh_chart":"cilium-1.20.1","instance":"<redacted-ip>:9964","io_cilium_app":"proxy","job":"kubernetes-service-endpoints","k8s_app":"cilium-envoy","namespace":"kube-system","node":"k8s-cp-01.novalocal","service":"cilium-envoy"},"value":[1793260643.806,"0"]},{"metric":{"__name__":"up","app_kubernetes_io_managed_by":"Helm","app_kubernetes_io_name":"cilium-envoy","app_kubernetes_io_part_of":"cilium","helm_sh_chart":"cilium-1.20.1","instance":"<redacted-ip>:9964","io_cilium_app":"proxy","job":"kubernetes-service-endpoints","k8s_app":"cilium-envoy","namespace":"kube-system","node":"k8s-worker-02.novalocal","service":"cilium-envoy"},"value":[1793260643.806,"0"]},{"metric":{"__name__":"up","app_kubernetes_io_name":"cilium-operator","app_kubernetes_io_part_of":"cilium","helm_sh_chart":"cilium-1.20.1","instance":"<redacted-ip>:9963","io_cilium_app":"operator","job":"kubernetes-pods","name":"cilium-operator","namespace":"kube-system","node":"k8s-worker-02.novalocal","pod":"cilium-operator-7b76dc94dd-tthgd","pod_template_hash":"7b76dc94dd"},"value":[1793260643.806,"0"]}]}}
+
+$ query: up{job="haproxy"}
+{"status":"success","data":{"resultType":"vector","result":[{"metric":{"__name__":"up","instance":"api-lb-01:8404","job":"haproxy"},"value":[1793260643.944,"1"]}]}}

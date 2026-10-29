@@ -19,7 +19,7 @@
 
     - name: Install the agent, pointed at the manager
       dnf:
-        name: wazuh-agent
+        name: wazuh-agent-4.14.9
         state: present
       environment:
         WAZUH_MANAGER: "{{ wazuh_manager_ip }}"    # the installer writes this into the agent's config

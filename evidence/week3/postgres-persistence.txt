@@ -1,0 +1,53 @@
+Week 3 Postgres persistence test
+Date: 2026-10-28T15:41:20+02:00
+Run by: faraaz on k8s-cp-01.novalocal
+Test user: testuser (created via the platform)
+
+$ kubectl -n student-platform get pod,pvc -o wide
+NAME                                    READY   STATUS    RESTARTS   AGE     IP             NODE                      NOMINATED NODE   READINESS GATES
+pod/postgres-0                          1/1     Running   0          3h26m   10.244.0.185   k8s-worker-01.novalocal   <none>           <none>
+pod/student-platform-7b969b8fdc-2lxdn   1/1     Running   0          13m     10.244.0.107   k8s-worker-01.novalocal   <none>           <none>
+
+NAME                                             STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS           VOLUMEATTRIBUTESCLASS   AGE   VOLUMEMODE
+persistentvolumeclaim/postgres-data-postgres-0   Bound    pvc-8209ff71-0063-4c44-925e-8affb28df398   5Gi        RWO            csi-cinder-sc-retain   <unset>                 21h   Filesystem
+
+$ kubectl -n student-platform get pod postgres-0 -o jsonpath={.metadata.uid}{"\n"}
+5ebffeee-a096-4c92-af15-51743eb2e31e
+
+$ kubectl -n student-platform exec postgres-0 -- sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "select username, is_admin from users order by id;"'
+ username | is_admin 
+----------+----------
+ admin    | t
+ testuser | f
+(2 rows)
+
+
+$ kubectl -n student-platform delete pod postgres-0
+pod "postgres-0" deleted from student-platform namespace
+
+$ kubectl -n student-platform get pod,pvc -o wide
+NAME                                    READY   STATUS    RESTARTS      AGE   IP             NODE                      NOMINATED NODE   READINESS GATES
+pod/postgres-0                          1/1     Running   0             9s    10.244.0.157   k8s-worker-01.novalocal   <none>           <none>
+pod/student-platform-7b969b8fdc-2lxdn   0/1     Running   1 (11s ago)   14m   10.244.0.107   k8s-worker-01.novalocal   <none>           <none>
+
+NAME                                             STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS           VOLUMEATTRIBUTESCLASS   AGE   VOLUMEMODE
+persistentvolumeclaim/postgres-data-postgres-0   Bound    pvc-8209ff71-0063-4c44-925e-8affb28df398   5Gi        RWO            csi-cinder-sc-retain   <unset>                 21h   Filesystem
+
+$ kubectl -n student-platform get pod postgres-0 -o jsonpath={.metadata.uid}{"\n"}
+ac6911ec-55ea-4c95-bd5e-bb382b8e4b06
+
+$ kubectl -n student-platform exec postgres-0 -- sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "select username, is_admin from users order by id;"'
+ username | is_admin 
+----------+----------
+ admin    | t
+ testuser | f
+(2 rows)
+
+
+Browser check: logged in as testuser after the restart, see platform-4-testuser-after-restart.png
+RESULT: PASS
+- postgres-0 deleted (PVC kept); StatefulSet recreated it with a new pod UID (5ebffeee-... -> ac6911ec-...).
+- Same PV (pvc-8209ff71-0063-4c44-925e-8affb28df398), csi-cinder-sc-retain, still Bound.
+- users table still contained admin and testuser after the restart.
+- testuser logged in through the platform in the browser after the restart.
+- The platform pod restarted once while the database was down and recovered by itself.

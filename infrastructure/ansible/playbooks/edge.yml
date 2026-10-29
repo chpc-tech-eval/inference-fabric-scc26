@@ -201,7 +201,7 @@
 
     - name: Install the Wazuh manager
       dnf:
-        name: wazuh-manager
+        name: wazuh-manager-4.14.9
         state: present
       tags: wazuh
 
@@ -276,6 +276,113 @@
         state: started
       tags: suricata
 
+    # ---------------- filebeat ----------------
+    - name: Install Filebeat (from the Wazuh repo)
+      dnf:
+        name: filebeat
+        state: present
+      tags: filebeat
+
+    - name: Folder for the indexer's CA certificate
+      file:
+        path: /etc/filebeat/certs
+        state: directory
+        mode: "0755"
+      tags: filebeat
+
+    - name: Copy the indexer's CA certificate (public)
+      copy:
+        src: "{{ playbook_dir }}/../files/wazuh-indexer-root-ca.pem"
+        dest: /etc/filebeat/certs/root-ca.pem
+        mode: "0644"
+      notify: restart filebeat
+      tags: filebeat
+
+    - name: Download Wazuh's alerts template
+      get_url:
+        url: https://raw.githubusercontent.com/wazuh/wazuh/v4.14.9/extensions/elasticsearch/7.x/wazuh-template.json
+        dest: /etc/filebeat/wazuh-template.json
+        mode: "0644"
+        force: true
+      notify: restart filebeat
+      tags: filebeat
+
+    - name: Install Wazuh's Filebeat module
+      unarchive:
+        src: https://packages.wazuh.com/4.x/filebeat/wazuh-filebeat-0.3.tar.gz
+        dest: /usr/share/filebeat/module
+        remote_src: true
+        creates: /usr/share/filebeat/module/wazuh
+      tags: filebeat
+
+    - name: Write the Filebeat settings
+      copy:
+        dest: /etc/filebeat/filebeat.yml
+        mode: "0600"
+        content: |
+          # Send Wazuh manager alerts to the indexer, via HAProxy -> Traefik.
+          output.elasticsearch:
+            hosts: ["10.151.0.100:9200"]
+            protocol: https
+            username: "${username}"
+            password: "${password}"
+            ssl.certificate_authorities: ["/etc/filebeat/certs/root-ca.pem"]
+            ssl.verification_mode: certificate
+          setup.template.json.enabled: true
+          setup.template.json.path: /etc/filebeat/wazuh-template.json
+          setup.template.json.name: wazuh
+          setup.template.overwrite: true
+          setup.ilm.overwrite: true
+          setup.ilm.enabled: false
+          filebeat.modules:
+            - module: wazuh
+              alerts:
+                enabled: true
+              archives:
+                enabled: false
+          logging.level: info
+          logging.to_files: true
+          logging.files:
+            path: /var/log/filebeat
+            name: filebeat
+            keepfiles: 7
+            permissions: 0644
+          logging.metrics.enabled: false
+          seccomp:
+            default_action: allow
+            syscalls:
+              - action: allow
+                names:
+                  - rseq
+      notify: restart filebeat
+      tags: filebeat
+
+    - name: Create Filebeat's keystore
+      command: filebeat keystore create
+      args:
+        creates: /var/lib/filebeat/filebeat.keystore
+      tags: filebeat
+
+    - name: Store the indexer login in the keystore (never in a file)
+      command: "filebeat keystore add {{ item.key }} --stdin --force"
+      args:
+        stdin: "{{ item.value }}"
+      loop:
+        - { key: username, value: admin }
+        - { key: password, value: "{{ (lookup('file', lookup('env', 'HOME') ~ '/.config/scc26-secrets/wazuh-indexer-creds.yaml') | from_yaml).stringData.INDEXER_PASSWORD }}" }
+      loop_control:
+        label: "{{ item.key }}"
+      no_log: true
+      changed_when: false
+      tags: filebeat
+
+    - name: Start Filebeat
+      systemd:
+        name: filebeat
+        enabled: true
+        state: started
+      tags: filebeat
+
   handlers:
     - name: reload nftables
       systemd:
@@ -301,4 +408,9 @@
     - name: restart suricata
       systemd:
         name: suricata
+        state: restarted
+
+    - name: restart filebeat
+      systemd:
+        name: filebeat
         state: restarted

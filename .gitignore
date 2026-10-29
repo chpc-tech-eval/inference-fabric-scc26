@@ -22,3 +22,4 @@ Thumbs.db
 *.crt.private
 secrets-private/
 infrastructure/ansible/inventories/private/
+!infrastructure/ansible/files/wazuh-indexer-root-ca.pem
