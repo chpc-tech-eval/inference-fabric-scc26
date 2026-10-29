@@ -1,0 +1,29 @@
+# Week 4 clock sync check
+# run at: 2026-10-29T19:05:35Z by gavin
+# git commit: 100f162
+
+api-lb-01 | CHANGED | rc=0 >>
+api-lb-01.novalocal
+Reference ID    : C40A3739 (ntp3.inx.net.za)
+System time     : 0.000210907 seconds slow of NTP time
+Leap status     : Normal
+k8s-cp-01 | CHANGED | rc=0 >>
+k8s-cp-01.novalocal
+Reference ID    : C40A63B6 (196.10.99.182.teraco.co.za)
+System time     : 0.000281992 seconds slow of NTP time
+Leap status     : Normal
+k8s-worker-01 | CHANGED | rc=0 >>
+k8s-worker-01.novalocal
+Reference ID    : 66CA781B (102.202.120.27)
+System time     : 0.000036053 seconds fast of NTP time
+Leap status     : Normal
+k8s-worker-02 | CHANGED | rc=0 >>
+k8s-worker-02.novalocal
+Reference ID    : 66DE9C97 (102.222.156.151)
+System time     : 0.000101342 seconds slow of NTP time
+Leap status     : Normal
+edge-01 | CHANGED | rc=0 >>
+edge-01.novalocal
+Reference ID    : 66CA781A (102.202.120.26)
+System time     : 0.000212299 seconds slow of NTP time
+Leap status     : Normal
