@@ -25,6 +25,12 @@ spec:
             exposedPort: 9200
             protocol: TCP
             nodePort: 30920
+        providers:
+          kubernetesIngress:
+            publishedService:
+              enabled: false
+        additionalArguments:
+          - "--providers.kubernetesingress.ingressendpoint.ip=10.151.0.100"
         service:
           spec:
             type: NodePort
