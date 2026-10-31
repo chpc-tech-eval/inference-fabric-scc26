@@ -122,6 +122,8 @@ locals {
     edge-wazuh-api        = ["edge", "tcp", 55000, 55000, local.K]
     api-lb-indexer-edge   = ["api-lb", "tcp", 9200, 9200, "${local.edge_ip}/32"]
     worker-indexer-lb     = ["k8s-worker", "tcp", 9200, 9200, "${local.api_lb_ip}/32"]
+    cp-cilium-metrics     = ["k8s-control-plane", "tcp", 9962, 9964, local.K]
+    worker-cilium-metrics = ["k8s-worker", "tcp", 9962, 9964, local.K]
   }
 
   # Temporary public SSH to edge-01 (disappears when enable_bootstrap_ssh = false)
