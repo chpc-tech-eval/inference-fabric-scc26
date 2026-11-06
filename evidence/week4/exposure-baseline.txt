@@ -1,0 +1,13 @@
+# Week 4 exposure BASELINE (before ACP deployed)
+# run at: 2026-11-06T15:28:12Z by gavin
+# terraform plan on dev: No changes
+
+## 1. Public path to an ACP-style URL (expect 404 from Traefik)
+404
+
+## 2. HAProxy listeners (expect only :6443 :80 :443 :8404 :9200)
+LISTEN 0      4096    10.151.0.100:6443      0.0.0.0:*    users:(("haproxy",pid=878,fd=6))                        
+LISTEN 0      4096    10.151.0.100:443       0.0.0.0:*    users:(("haproxy",pid=878,fd=8))                        
+LISTEN 0      4096    10.151.0.100:80        0.0.0.0:*    users:(("haproxy",pid=878,fd=7))                        
+LISTEN 0      4096    10.151.0.100:8404      0.0.0.0:*    users:(("haproxy",pid=878,fd=10))                       
+LISTEN 0      4096    10.151.0.100:9200      0.0.0.0:*    users:(("haproxy",pid=878,fd=9))                        
