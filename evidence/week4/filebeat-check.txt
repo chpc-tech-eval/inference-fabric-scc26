@@ -1,0 +1,38 @@
+# Week 4 Filebeat check (Week 3 carry-over)
+# run at: 2026-11-06T15:35:05Z by gavin
+
+## 1. Services on edge-01
+active
+active
+
+## 2. Filebeat -> indexer via HAProxy
+elasticsearch: https://10.151.0.100:9200...
+  parse url... OK
+  connection...
+    parse host... OK
+    dns lookup... OK
+    addresses: 10.151.0.100
+    dial up... OK
+  TLS...
+    security... WARN server's certificate chain verification is disabled
+    handshake... OK
+    TLS version: TLSv1.2
+    dial up... OK
+  talk to server... OK
+  version: 7.10.2
+
+## 3. Newest alert timestamp on the manager
+"timestamp":"2026-11-06T17:35:06.815+0200"
+"timestamp":"Nov 06 15:35:06"
+
+## 4. TLS verification proof (the WARN above is cosmetic in verification_mode: certificate)
+# run at: 2026-11-06T15:39:55Z by gavin
+### 4a. Indexer cert against our CA
+    Verify return code: 0 (ok)
+### 4b. Filebeat given the wrong CA (one-off -E override, config unchanged)
+    handshake... ERROR x509: certificate signed by unknown authority
+### 4c. Indexer cert identity and dates (team-generated in Week 3, sealed in gitops/resources/wazuh/)
+subject=C=US, L=California, O=Wazuh, OU=Wazuh, CN=demo.indexer
+issuer=OU=Wazuh, O=Wazuh, L=California
+notBefore=Oct 16 10:49:03 2026 GMT
+notAfter=Oct 13 10:49:03 2036 GMT
