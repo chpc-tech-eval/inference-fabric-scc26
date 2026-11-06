@@ -1,0 +1,57 @@
+# Week 4 DNS path (pod -> CoreDNS -> Pi-hole -> upstream)
+# run at: 2026-11-06T15:46:37Z by gavin
+
+## 1. CoreDNS forwarding rules
+.:53 {
+    errors
+    health {
+       lameduck 5s
+    }
+    ready
+    kubernetes cluster.local in-addr.arpa ip6.arpa {
+       pods insecure
+       fallthrough in-addr.arpa ip6.arpa
+       ttl 30
+    }
+    prometheus :9153
+    forward . /etc/resolv.conf {
+       max_concurrent 1000
+    }
+    cache 30
+    loop
+    reload
+    loadbalance
+}
+inference-fabric.scc26.internal:53 {
+    errors
+    cache 30
+    forward . 10.150.0.10
+}
+
+## 2. Node resolver (what CoreDNS forwards to by default)
+nameserver 10.150.0.10
+nameserver 1.1.1.1
+
+## 3. Pi-hole upstream servers (from the repo)
+173:          Environment="FTLCONF_dns_upstreams={{ pihole_upstream_dns }}"
+
+## 4. Pod -> external name lookup
+pod/dnstest created
+Server:		10.96.0.10
+Address:	10.96.0.10:53
+
+Non-authoritative answer:
+Name:	api.github.com
+Address: 20.87.245.6
+
+Non-authoritative answer:
+
+pod "dnstest" deleted from default namespace
+
+## 5. Where pihole_upstream_dns is set
+infrastructure/ansible/inventories/private/hosts.yml:42:    pihole_upstream_dns: "1.1.1.1;1.0.0.1"
+infrastructure/ansible/inventories/example/hosts.yml:28:    pihole_upstream_dns: "<..>"
+
+## Note
+Node resolv.conf lists Pi-hole AND 1.1.1.1; CoreDNS picks randomly between them.
+Pi-hole-only records must live under inference-fabric.scc26.internal (always routed to Pi-hole).
