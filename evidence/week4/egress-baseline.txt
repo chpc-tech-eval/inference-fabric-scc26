@@ -1,0 +1,22 @@
+# Week 4 egress baseline (before model endpoint known)
+# run at: 2026-11-06T15:32:17Z by gavin
+
+## 1. Worker node -> external HTTPS
+200
+
+## 2. Pod -> external HTTPS
+pod/egresstest created
+NAME         READY   STATUS      RESTARTS   AGE   IP             NODE                      NOMINATED NODE   READINESS GATES
+egresstest   0/1     Completed   0          20s   10.244.1.143   k8s-worker-02.novalocal   <none>           <none>
+200
+pod "egresstest" deleted from default namespace
+
+## 3. Existing network policies
+NAMESPACE   NAME                                                                              POD-SELECTOR                                              AGE
+argocd      networkpolicy.networking.k8s.io/argocd-application-controller-network-policy      app.kubernetes.io/name=argocd-application-controller      17d
+argocd      networkpolicy.networking.k8s.io/argocd-applicationset-controller-network-policy   app.kubernetes.io/name=argocd-applicationset-controller   17d
+argocd      networkpolicy.networking.k8s.io/argocd-dex-server-network-policy                  app.kubernetes.io/name=argocd-dex-server                  17d
+argocd      networkpolicy.networking.k8s.io/argocd-notifications-controller-network-policy    app.kubernetes.io/name=argocd-notifications-controller    17d
+argocd      networkpolicy.networking.k8s.io/argocd-redis-network-policy                       app.kubernetes.io/name=argocd-redis                       17d
+argocd      networkpolicy.networking.k8s.io/argocd-repo-server-network-policy                 app.kubernetes.io/name=argocd-repo-server                 17d
+argocd      networkpolicy.networking.k8s.io/argocd-server-network-policy                      app.kubernetes.io/name=argocd-server                      17d
