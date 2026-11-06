@@ -1,0 +1,32 @@
+# Week 4 network ranges and outgoing address (for the model endpoint check)
+# run at: 2026-11-06T15:43:03Z by gavin
+
+## 1. Kubernetes service range
+    - --service-cluster-ip-range=10.96.0.0/12
+
+## 2. Cilium pod range
+  cluster-pool-ipv4-cidr: 10.244.0.0/16
+  cluster-pool-ipv4-mask-size: "24"
+  ipam: cluster-pool
+
+## 3. Our own networks
+mgmt 10.150.0.0/24, k8s 10.151.0.0/24, vpn 10.152.0.0/24
+
+## 4. Worker routing table
+default via 10.151.0.1 dev eth0 proto dhcp src 10.151.0.21 metric 100 
+10.151.0.0/24 dev eth0 proto kernel scope link src 10.151.0.21 metric 100 
+10.244.0.0/24 via 10.244.0.218 dev cilium_host proto kernel src 10.244.0.218 
+10.244.0.218 dev cilium_host proto kernel scope link 
+10.244.1.0/24 via 10.244.0.218 dev cilium_host proto kernel src 10.244.0.218 mtu 8900 
+10.244.2.0/24 via 10.244.0.218 dev cilium_host proto kernel src 10.244.0.218 mtu 8900 
+169.254.169.254 via 10.151.0.200 dev eth0 proto dhcp src 10.151.0.21 metric 100 
+
+## 5. Sebowa router external address (what the model sees as our source)
+inference-fabric-router
+external_gateway_info:
+  enable_snat: true
+  external_fixed_ips:
+  - ip_address: 154.114.52.62
+    subnet_id: 9444cfcf-4c6f-4001-a0e3-805f591a7866
+  network_id: 4a39d5bf-15a8-4e87-a14b-a4f2cff8f57d
+name: inference-fabric-router
