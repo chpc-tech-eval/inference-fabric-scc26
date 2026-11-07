@@ -1,0 +1,89 @@
+---
+import { currentUser } from '../../../lib/auth.js';
+import { getAcp } from '../../../lib/acp-service.js';
+import { errorCode, explanationText, fmtTime, isUuid, messageForCode, normalizeDetail, outcome, createdAt } from '../../../lib/acp-view.js';
+
+Astro.response.headers.set('Cache-Control', 'no-store');
+
+let user = null;
+try { user = await currentUser(Astro.cookies); } catch { return new Response('Database unavailable', { status: 503 }); }
+if (!user) return Astro.redirect('/');
+if (!user.is_admin) return new Response('Forbidden: staff only', { status: 403 });
+
+const id = Astro.params.id;
+if (!isUuid(id)) return new Response('Not found', { status: 404 });
+
+let raw = null, problem = null;
+const { acp } = getAcp();
+if (!acp) {
+  problem = messageForCode('not_configured');
+} else {
+  try {
+    raw = await acp.getTask(user.acp_uuid, id);
+  } catch (e) {
+    console.error('ACP get failed:', e.name, e.status ?? '');
+    problem = messageForCode(errorCode(e));
+  }
+}
+const d = raw ? normalizeDetail(raw) : null;
+const out = d ? outcome(d.task, d.run) : null;
+const explanation = d ? explanationText(d.explanation) : null;
+const evidenceJson = d && d.evidence != null ? JSON.stringify(d.evidence, null, 2) : null;
+---
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+{out?.inProgress && <meta http-equiv="refresh" content="3" />}
+<title>Diagnostic task</title>
+<style>
+body{font-family:system-ui,sans-serif;max-width:900px;margin:2rem auto;padding:0 1rem}
+pre{background:#f4f4f4;padding:.6rem;overflow:auto}
+.bad{color:#b00}.ok{color:#080}.wait{color:#b60}
+.problem{border:2px solid #b00;padding:.6rem;margin:1rem 0}
+.banner{border:2px solid currentColor;padding:.6rem;margin:1rem 0}
+.interp{white-space:pre-wrap}
+</style>
+</head>
+<body>
+<p><a href="/admin/diagnostics">&larr; All tasks</a></p>
+<h1>Diagnostic task</h1>
+<p><code>{id}</code></p>
+{problem && <p class="problem" role="alert">{problem}</p>}
+
+{d && out && (
+<>
+<div class={`banner ${out.tone}`}>
+  <strong>{out.label}</strong>
+  <div>{out.detail}</div>
+  <small>Requested: {fmtTime(createdAt(d.task))}</small>
+</div>
+
+<h2>1. Evidence</h2>
+<p><small>Raw numbers and timestamps collected from Prometheus. Check these against Prometheus yourself.</small></p>
+{evidenceJson ? <pre>{evidenceJson}</pre> : <p>No evidence recorded for this task.</p>}
+
+<h2>2. Explanation</h2>
+<p><small>The model's interpretation of the evidence. It is not a measurement.</small></p>
+{explanation ? <div class="interp">{explanation}</div> : <p>No explanation available.</p>}
+
+<h2>3. Event history</h2>
+{d.events.length === 0 ? <p>No events recorded.</p> : (
+<ol>
+{d.events.map((e) => (
+<li>
+  <strong>{String(e?.type ?? e?.event ?? e?.status ?? 'event')}</strong>
+  <small> {fmtTime(e?.created_at ?? e?.at ?? e?.timestamp ?? e?.time)}</small>
+</li>
+))}
+</ol>
+)}
+
+<details>
+  <summary>Raw response from the ACP</summary>
+  <pre>{JSON.stringify(raw, null, 2)}</pre>
+</details>
+</>
+)}
+</body>
+</html>

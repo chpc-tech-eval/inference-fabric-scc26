@@ -25,7 +25,7 @@ export async function currentUser(cookies) {
   const u = readToken(cookies.get('session')?.value);
   if (!u) return null;
   await init();
-  const r = await query('select username, display_name, is_admin from users where username = $1', [u]);
+  const r = await query('select username, display_name, is_admin, acp_uuid from users where username = $1', [u]);
   return r.rows[0] || null;
 }
 
