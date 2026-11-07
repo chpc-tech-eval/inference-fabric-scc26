@@ -1,0 +1,14 @@
+---
+apiVersion: bitnami.com/v1alpha1
+kind: SealedSecret
+metadata:
+  name: acp-signing
+  namespace: student-platform
+spec:
+  encryptedData:
+    private.pem: AgC7HTI3TAuBkLghC6/jz59SMN7W5228EVRUcfl6GXfhIuDT+RZSlF29fC0TlbcvU7DP9KV2ZiQ0wjb3faMVJ2o8eX5pmCo9kTzWc88ejhWdY5RN0oWQwMbSuG4Kz73HS09vq38Borom+ewMTL28hcgCBpexayGgQdl5Oro4ueNWllnI09vDtY5+ZVjHsiZjb0bkyc6tzW7uQSGmOK0/9xb6z/gpZTSzatOG56S4aBgXJghcskw3yz23d7SaObLLG9LcZw9eiG9Y5yCowb4QenYDWTyjwwPen8agrUIPsGVOvr1U08qkT5EoAhW/1i7OwII4A9l9rE+13nWzNrXilyNaVLEqYWLcJQyjQk2tEGqnhcRIOQvNpCJN5xJ4yEEGh3EyAlvlVnSRiJDfzIo88aasdEBhL7iuS7uI08ZikXKjCchQVk68piI4GC9yViZlZE+rTLRLWYn5I1SyWaO/calW0xVvj94lxngkSHpx0Itwn8iD0y4mN7ElAAQqGzE1+DWTgagBQY7eHWFVl5frQlBINntMxznvtR7n0f2s8MI3nSgNMH6xEgb0/XZMGEJ5tgh+QyjrAaF2bEZ6Ct8l27LLSEVvPtiigOsxJ+UFAmxSMDLZSd5Scx56Jk+kCbbTRdCRETlA07EhZWDyLQ7WP/htlPcV1a5Hdv40Ek4NR8XdtUYfkVE8XeXtHHNA/Ev2TatwTrOoabx+lPdSL7p3YXfq2unZ8UAz1JUavAcp73zdNx20t2qoPA6QodaDGOaHEZ5tXYMW+i+niZ74xV6wdRr9tc0IAAtnuHV4fPJrx5aN69Ldfvako8AA9vx0jy1p+xJhD+tBRKRMZjhdfVZaCyn45kx8+MS5Dw==
+  template:
+    metadata:
+      name: acp-signing
+      namespace: student-platform
+    type: Opaque
