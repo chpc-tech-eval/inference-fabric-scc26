@@ -1,0 +1,11 @@
+# Week 4 CPU features (also the Week 5 hardware record)
+# run at: 2026-11-07T11:14:44Z by gavin
+
+k8s-worker-01 | CHANGED | rc=0 >>
+CPU(s):                               8
+Model name:                           Intel Xeon Processor (Cascadelake)
+avx2 avx512f avx512_vnni 
+k8s-worker-02 | CHANGED | rc=0 >>
+CPU(s):                               8
+Model name:                           Intel Xeon Processor (Cascadelake)
+avx2 avx512f avx512_vnni 

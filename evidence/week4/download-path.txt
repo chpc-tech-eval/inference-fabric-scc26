@@ -1,0 +1,8 @@
+# Week 4 model download path (pod -> Hugging Face, first 1 KB only)
+# run at: 2026-11-07T11:14:49Z by gavin
+
+pod/dltest created
+NAME     READY   STATUS      RESTARTS   AGE   IP            NODE                      NOMINATED NODE   READINESS GATES
+dltest   0/1     Completed   0          25s   10.244.1.27   k8s-worker-02.novalocal   <none>           <none>
+206 1024 bytes
+pod "dltest" deleted from default namespace
