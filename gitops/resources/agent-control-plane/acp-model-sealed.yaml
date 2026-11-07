@@ -1,0 +1,14 @@
+---
+apiVersion: bitnami.com/v1alpha1
+kind: SealedSecret
+metadata:
+  name: acp-model
+  namespace: agent-control-plane
+spec:
+  encryptedData:
+    ACP_MODEL_API_KEY: AgBtFzP7Y7MedSja7Tex1Cf4KCfsW8V2EfLX4xNdlkHrpxsSenJzpz3DDpggyfc8/6LCLX++nmwoe+rZ1O3HzBUHQIUSQnD2SeT6dK72yEyufuQH3edRXMmbNwC+D/Z7jBiVF7/A9VtsklYYqj92B+ThTFfJ/M7Nyz+HW/DKk01o6/OOYJeuIOxs5l5e9QCkh3q1CIGcwjm5yENEgEQHlUAzJAWs7MS1AWeThjO7M/huK/KWbxjnw/sajfvvXBXkLW3qHhGJCALF1/HGzlrxomigmpZunxdxKcH5aQXNzDfjcDUtx8r5R4Qa7q/qqcmIwQ/jrcm+QB8FFTKHlfu9EqolIymmFcn8ruLfs+4b5ElYaQ85Fj524Pi2jZqHI3YxLQzNGsvKgF7Lqf69dAic8O8IS6SO6eW5BrxzZSm8HPTQFiicyU4QSS/xOtT9Y0qUbDtumZuctpFxhkPcko1gKci8sCoeJFWyhtwY4VH46oAGSPSmyx0ha8Pv/cXGVeVWcLPdI8cS7Q+/4nhvcRBT6Db2OcexbHVfoYy0Y7bSzEuuYNNEMk+V0pw9PfaGWVApHUxrJHPKvBt9TGGbu12XRsBTKUnmLOVq0Ro3r8dcUtrIdr0pcer9fkaecweUacdrwhDCA75X38ZBAPB+etn88K5MAKema/XAar646XPrvROvXzTQDpRuyzZKKzPjiaZRH9rTF95M9z9oeTzc2OZ9zRHDoLr6EfjNZPVwnCW52N8C/GFEiiDFPudf1sr+707ermo=
+  template:
+    metadata:
+      name: acp-model
+      namespace: agent-control-plane
+    type: Opaque

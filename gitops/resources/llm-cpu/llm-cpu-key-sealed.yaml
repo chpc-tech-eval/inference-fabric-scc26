@@ -1,0 +1,13 @@
+---
+apiVersion: bitnami.com/v1alpha1
+kind: SealedSecret
+metadata:
+  name: llm-cpu-key
+  namespace: inference
+spec:
+  encryptedData:
+    api-key: AgB6KSEJS6DTWi7XHHvIsbRePATyUBmWU51wiETjoVxc8KUp8wBqeGSI7qc50LlGLaLf/ov1FnisfZvQk48ULKN6cqH/NBeORItl4Q0jfAzdsIvAc1PQHVBF7KXdiI+NsbUcvfpLzIhm0Z8YWH0h0laY6qigQj2/+LhmDiw1MhGcU7mHH//39g7UYQpLNZ9T/aMrK1oJw/JWRDgUlN6sMnTE1Z2Laj9bEB7/U2HySbkL3keT2fJRXGquxeK1Kl2eYnMSMgMqqbm1Fnbbdct+n/6+st4g1KDcSaZf8qetEzFmGz0HhpGdVjOCU1O27ybNgcQDxzv5JcJr7RXCaLCsxVQu+HCjn2SQedKax9YN/nZbE+tM2fHZY4mVk6wq8GFVJuidUHEGvrqPpyosnsHCU1kyxaGaLV3E0nGKMjxxlF9m/7d7FZwLT3sTTu/Gqk5F1jVBTE6ZM68kwvhs24La99qmImI6Hx9s1hwv6vib3zgrFU5uJY9ddB/k2TAF6U2Twn9BnpWvtFP7LVl5dFyhDd0S/acXQ9WM+6oDmtZwSkDjeqW+HRjfiGxLrUVTFKx4mopCgZFldB3XQzwCubN6XhKPcMV5I/gm4q18QnRh2GsaiG/AsAW9RbSpRaTlMh7wbtAwShNxOZTkl08aG2y9JzRDXeE17GwDvHIzjhI+6f+oh/B4lVDPbG41M41kHynBifmI8x4B1m8HZfhA4/v1iVIS9z3Mj5IXTgA+elAH7S8yFxoHGbf7FZbNJPdlrJ4uRp0=
+  template:
+    metadata:
+      name: llm-cpu-key
+      namespace: inference
