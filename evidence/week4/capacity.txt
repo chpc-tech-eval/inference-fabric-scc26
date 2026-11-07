@@ -1,0 +1,34 @@
+# Week 4 capacity check (before llm-cpu: requests 6 CPU / 4Gi, limit 6Gi)
+# run at: 2026-11-07T11:09:12Z by gavin
+
+## 1. What Kubernetes can hand out per node (allocatable)
+NAME                      CPU   MEMORY
+k8s-cp-01.novalocal       4     7762908Ki
+k8s-worker-01.novalocal   8     16010272Ki
+k8s-worker-02.novalocal   8     16010280Ki
+
+## 2. What is already requested / limited per node
+Name:               k8s-cp-01.novalocal
+  cpu                850m (21%)  1 (25%)
+  memory             180Mi (2%)  1194Mi (15%)
+Name:               k8s-worker-01.novalocal
+  cpu                150m (1%)   1500m (18%)
+  memory             138Mi (0%)  1408Mi (9%)
+Name:               k8s-worker-02.novalocal
+  cpu                970m (12%)    4200m (52%)
+  memory             2672Mi (17%)  5418Mi (34%)
+
+## 3. Actual live usage (needs metrics-server)
+error: Metrics API not available
+
+## 4. Workers: real memory, cores, root disk
+k8s-worker-01 | CHANGED | rc=0 >>
+               total        used        free      shared  buff/cache   available
+Mem:            15Gi       3.5Gi       1.4Gi        24Mi        10Gi        11Gi
+8
+/dev/vda4        99G   14G   85G  15% /
+k8s-worker-02 | CHANGED | rc=0 >>
+               total        used        free      shared  buff/cache   available
+Mem:            15Gi       2.8Gi       5.1Gi       9.0Mi       7.8Gi        12Gi
+8
+/dev/vda4        99G   15G   84G  16% /
