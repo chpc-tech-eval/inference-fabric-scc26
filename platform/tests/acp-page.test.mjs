@@ -77,3 +77,35 @@ test('error codes and messages', () => {
   assert.equal(messageForCode(null), null);
   assert.ok(isUuid(U) && !isUuid('abc'));
 });
+
+import { durationSeconds, fmtDuration } from '../src/lib/acp-view.js';
+
+test('slow model: running with evidence says "Explaining", without says "Running"', () => {
+  const withEv = outcome({ status: 'running' }, null, { hasEvidence: true });
+  assert.equal(withEv.kind, 'explaining');
+  assert.match(withEv.label, /Explaining/);
+  assert.ok(withEv.inProgress);
+  assert.equal(outcome({ status: 'running' }, null, { hasEvidence: false }).kind, 'running');
+  assert.equal(outcome({ status: 'running' }).kind, 'running');
+});
+
+test('evidence flag never hides a failure', () => {
+  assert.equal(outcome({ status: 'failed', error_code: 'model_unavailable' }, null, { hasEvidence: true }).label, 'Explanation failed');
+});
+
+test('duration: waiting uses now, finished uses last event, no timestamps gives null', () => {
+  const t0 = '2026-11-07T10:00:00Z';
+  const now = Date.parse('2026-11-07T10:01:30Z');
+  assert.equal(durationSeconds({ created_at: t0 }, [], true, now), 90);
+  assert.equal(durationSeconds({ created_at: t0 }, [{ created_at: '2026-11-07T10:00:05Z' }, { created_at: '2026-11-07T10:01:05Z' }], false, now), 65);
+  assert.equal(durationSeconds({ created_at: t0 }, [], false, now), null);
+  assert.equal(durationSeconds({}, [], true, now), null);
+  assert.equal(durationSeconds({ created_at: t0 }, [{ created_at: '2026-11-07T09:00:00Z' }], false, now), null);
+});
+
+test('fmtDuration', () => {
+  assert.equal(fmtDuration(45), '45s');
+  assert.equal(fmtDuration(95), '1m 35s');
+  assert.equal(fmtDuration(NaN), '—');
+  assert.equal(fmtDuration(-1), '—');
+});

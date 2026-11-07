@@ -1,7 +1,7 @@
 ---
 import { currentUser } from '../../../lib/auth.js';
 import { getAcp } from '../../../lib/acp-service.js';
-import { errorCode, explanationText, fmtTime, isUuid, messageForCode, normalizeDetail, outcome, createdAt } from '../../../lib/acp-view.js';
+import { errorCode, explanationText, fmtTime, fmtDuration, durationSeconds, isUuid, messageForCode, normalizeDetail, outcome, createdAt } from '../../../lib/acp-view.js';
 
 Astro.response.headers.set('Cache-Control', 'no-store');
 
@@ -26,7 +26,8 @@ if (!acp) {
   }
 }
 const d = raw ? normalizeDetail(raw) : null;
-const out = d ? outcome(d.task, d.run) : null;
+const out = d ? outcome(d.task, d.run, { hasEvidence: d.evidence != null }) : null;
+const secs = d && out ? durationSeconds(d.task, d.events, !!out.inProgress) : null;
 const explanation = d ? explanationText(d.explanation) : null;
 const evidenceJson = d && d.evidence != null ? JSON.stringify(d.evidence, null, 2) : null;
 ---
@@ -57,6 +58,7 @@ pre{background:#f4f4f4;padding:.6rem;overflow:auto}
   <strong>{out.label}</strong>
   <div>{out.detail}</div>
   <small>Requested: {fmtTime(createdAt(d.task))}</small>
+  {secs != null && <div><small>{out.inProgress ? 'Waiting for' : 'Total time'}: {fmtDuration(secs)}</small></div>}
 </div>
 
 <h2>1. Evidence</h2>
