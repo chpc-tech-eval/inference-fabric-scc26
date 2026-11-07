@@ -60,6 +60,27 @@ export function fmtTime(v) {
   return d.toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
 }
 
+const toMs = (v) => { const t = v ? new Date(v).getTime() : NaN; return Number.isNaN(t) ? null : t; };
+const eventTime = (e) => toMs(e?.created_at ?? e?.at ?? e?.timestamp ?? e?.time);
+
+/**
+ * Seconds from request to now (while waiting) or to the last recorded event (when finished).
+ * Returns null when the ACP gave no usable timestamps: we never guess a duration.
+ */
+export function durationSeconds(task, events, inProgress, now = Date.now()) {
+  const times = (Array.isArray(events) ? events : []).map(eventTime).filter((t) => t != null);
+  const start = toMs(createdAt(task)) ?? (times.length ? Math.min(...times) : null);
+  if (start == null) return null;
+  const end = inProgress ? now : (times.length ? Math.max(...times) : null);
+  if (end == null || end < start) return null;
+  return Math.round((end - start) / 1000);
+}
+
+export function fmtDuration(s) {
+  if (!Number.isFinite(s) || s < 0) return '—';
+  return s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${s % 60}s`;
+}
+
 /**
  * What the status means for a person. Failures are never shown as healthy:
  *  - no data            -> "No metrics found"
@@ -67,7 +88,7 @@ export function fmtTime(v) {
  *  - worker_interrupted -> "Interrupted, please request again"
  *  - anything unknown   -> shown as unknown, with the raw status
  */
-export function outcome(task, run) {
+export function outcome(task, run, opts = {}) {
   const parts = [task?.status, task?.error_code, task?.failure_code, task?.error?.code,
     typeof task?.error === 'string' ? task.error : null,
     run?.status, run?.error_code, run?.failure_code, run?.error?.code];
@@ -85,8 +106,13 @@ export function outcome(task, run) {
       detail: 'The model could not produce an explanation. The evidence below was collected before the model call.' };
   if (['queued', 'pending', 'accepted'].includes(status))
     return { kind: 'queued', tone: 'wait', inProgress: true, label: 'Queued', detail: 'Waiting for the worker.' };
-  if (['running', 'in_progress', 'started'].includes(status))
+  if (['running', 'in_progress', 'started'].includes(status)) {
+    // On the CPU model the explanation can take 30-120 s. Once evidence exists, say so.
+    if (opts.hasEvidence)
+      return { kind: 'explaining', tone: 'wait', inProgress: true, label: 'Explaining… (this can take a minute on CPU)',
+        detail: 'The evidence has been collected and is shown below. The model is still writing the explanation. This page refreshes by itself.' };
     return { kind: 'running', tone: 'wait', inProgress: true, label: 'Running', detail: 'The worker is collecting evidence.' };
+  }
   if (['succeeded', 'success', 'completed', 'complete'].includes(status))
     return { kind: 'succeeded', tone: 'ok', label: 'Succeeded', detail: 'Check the evidence against Prometheus. The explanation is only an interpretation.' };
   if (/fail|error|cancel|timeout/.test(status))
