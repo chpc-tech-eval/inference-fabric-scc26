@@ -29,6 +29,7 @@ input,button{padding:.5rem;margin:.25rem 0;display:block}
 <h2>Welcome, {user.display_name}</h2>
 <p>Username: {user.username}{user.is_admin ? ' (admin)' : ''}</p>
 <form method="post" action="/api/logout"><button>Log out</button></form>
+{user.is_admin && <p><a href="/admin/diagnostics">AI diagnostics (staff)</a></p>}
 {user.is_admin && (
 <form method="post" action="/api/users">
 <h3>Create user</h3>

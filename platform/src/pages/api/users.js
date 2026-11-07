@@ -1,4 +1,5 @@
 import bcrypt from 'bcryptjs';
+import { randomUUID } from 'node:crypto';
 import { query } from '../../lib/db.js';
 import { currentUser } from '../../lib/auth.js';
 
@@ -12,7 +13,7 @@ export const POST = async ({ request, cookies, redirect }) => {
   if (!/^[a-z0-9_.-]{3,32}$/.test(username) || password.length < 8)
     return redirect('/?msg=invalid', 303);
   await query(
-    'insert into users (username, display_name, password_hash) values ($1, $2, $3) on conflict (username) do nothing',
-    [username, display, await bcrypt.hash(password, 10)]);
+    'insert into users (username, display_name, password_hash, acp_uuid) values ($1, $2, $3, $4) on conflict (username) do nothing',
+    [username, display, await bcrypt.hash(password, 10), randomUUID()]);
   return redirect('/?msg=created', 303);
 };

@@ -1,0 +1,98 @@
+---
+import { randomUUID } from 'node:crypto';
+import { currentUser } from '../../../lib/auth.js';
+import { csrfToken } from '../../../lib/csrf.js';
+import { query } from '../../../lib/db.js';
+import { getAcp } from '../../../lib/acp-service.js';
+import { askerUuid, createdAt, errorCode, fmtTime, messageForCode, normalizeList, outcome, taskIdOf } from '../../../lib/acp-view.js';
+
+Astro.response.headers.set('Cache-Control', 'no-store');
+
+let user = null;
+try { user = await currentUser(Astro.cookies); } catch { return new Response('Database unavailable', { status: 503 }); }
+if (!user) return Astro.redirect('/');
+if (!user.is_admin) return new Response('Forbidden: staff only', { status: 403 });
+
+const parsed = Number.parseInt(Astro.url.searchParams.get('offset') ?? '0', 10);
+const offset = Number.isInteger(parsed) && parsed >= 0 ? parsed : 0;
+
+let rows = [];
+let problem = messageForCode(Astro.url.searchParams.get('error'));
+const { acp } = getAcp();
+if (!acp) {
+  problem ??= messageForCode('not_configured');
+} else {
+  try {
+    const tasks = normalizeList(await acp.listTasks(user.acp_uuid, offset));
+    const uuids = [...new Set(tasks.map((t) => askerUuid(t)).filter(Boolean))];
+    const names = new Map();
+    if (uuids.length) {
+      const r = await query('select acp_uuid, username from users where acp_uuid = any($1::uuid[])', [uuids]);
+      for (const x of r.rows) names.set(x.acp_uuid, x.username);
+    }
+    rows = tasks.map((t) => ({
+      id: taskIdOf(t),
+      time: fmtTime(createdAt(t)),
+      who: names.get(askerUuid(t)) ?? (askerUuid(t) ? 'unknown user' : '—'),
+      out: outcome(t, null),
+    }));
+  } catch (e) {
+    console.error('ACP list failed:', e.name, e.status ?? '');
+    problem ??= messageForCode(errorCode(e));
+  }
+}
+const anyWaiting = rows.some((r) => r.out.inProgress);
+const csrf = csrfToken(Astro.cookies.get('session')?.value);
+const idem = randomUUID(); // new per page load; a re-submitted form reuses it
+const requested = Astro.url.searchParams.get('msg') === 'requested';
+---
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+{anyWaiting && <meta http-equiv="refresh" content="3" />}
+<title>AI diagnostics</title>
+<style>
+body{font-family:system-ui,sans-serif;max-width:900px;margin:2rem auto;padding:0 1rem}
+table{border-collapse:collapse;width:100%}
+th,td{border-bottom:1px solid #ccc;padding:.4rem;text-align:left}
+.bad{color:#b00;font-weight:600}.ok{color:#080;font-weight:600}.wait{color:#b60;font-weight:600}
+.problem{border:2px solid #b00;padding:.6rem;margin:1rem 0}
+</style>
+</head>
+<body>
+<p><a href="/">Home</a></p>
+<h1>AI diagnostics</h1>
+<p>Staff only. The website asks the Agent Control Plane to read one fixed Prometheus number and explain it.</p>
+{problem && <p class="problem" role="alert">{problem}</p>}
+{requested && <p class="ok">Requested.</p>}
+
+<form method="post" action="/api/acp/request">
+  <input type="hidden" name="csrf" value={csrf ?? ''} />
+  <input type="hidden" name="idempotency_key" value={idem} />
+  <button disabled={!acp || !csrf}>Request diagnostic</button>
+</form>
+
+<h2>Past tasks</h2>
+{acp && rows.length === 0 && !problem && <p>No tasks yet.</p>}
+{rows.length > 0 && (
+<table>
+<thead><tr><th>Time</th><th>Asked by</th><th>Status</th><th></th></tr></thead>
+<tbody>
+{rows.map((r) => (
+<tr>
+  <td>{r.time}</td>
+  <td>{r.who}</td>
+  <td class={r.out.tone}>{r.out.label}</td>
+  <td>{r.id ? <a href={`/admin/diagnostics/${r.id}`}>Open</a> : ''}</td>
+</tr>
+))}
+</tbody>
+</table>
+)}
+<p>
+{offset > 0 && <a href={`/admin/diagnostics?offset=${Math.max(0, offset - 50)}`}>Newer</a>}
+{rows.length === 50 && <a href={`/admin/diagnostics?offset=${offset + 50}`}> Older</a>}
+</p>
+</body>
+</html>
