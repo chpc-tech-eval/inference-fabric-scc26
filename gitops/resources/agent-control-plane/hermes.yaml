@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: agent-control-plane-hermes
+  namespace: agent-control-plane
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  serviceName: agent-control-plane-hermes
+  replicas: 1  # Mandatory: single replica only
+  selector:
+    matchLabels:
+      app: acp-hermes
+  template:
+    metadata:
+      labels:
+        app: acp-hermes
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        fsGroup: 1000
+      containers:
+        - name: hermes-worker
+          image: <APPROVED_HERMES_IMAGE_DIGEST>  # Update once provided by CI/CD
+          env:
+            - name: HERMES_HOME
+              value: /var/lib/hermes/admin-readonly
+            - name: ACP_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: acp-db-app
+                  key: url
+            - name: ACP_MODEL
+              value: "<MODEL_ID>"  # Provided by Infrastructure
+            - name: ACP_MODEL_BASE_URL
+              value: "http://<INFRA_MODEL_ENDPOINT>/v1"  # Provided by Infrastructure
+            - name: ACP_PROMETHEUS_URL
+              value: "http://prometheus-server.monitoring.svc.cluster.local:9090"
+            - name: ACP_MODEL_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: acp-model
+                  key: api-key
+          volumeMounts:
+            - name: hermes-data
+              mountPath: /var/lib/hermes/admin-readonly
+  volumeClaimTemplates:
+    - metadata:
+        name: hermes-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        storageClassName: cinder-agent-retain
+        resources:
+          requests:
+            storage: 5Gi
