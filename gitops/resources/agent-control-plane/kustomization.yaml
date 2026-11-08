@@ -1,0 +1,13 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: agent-control-plane
+
+resources:
+  - namespace.yaml
+  - storage.yaml
+  - postgres.yaml
+  - migration-job.yaml
+  - acp-db-owner-sealed.yaml
+  - acp-db-app-sealed.yaml
+  - acp-verification-sealed.yaml
+  - acp-model-sealed.yaml

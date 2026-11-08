@@ -1,0 +1,21 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: acp-db-migration
+  namespace: agent-control-plane
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: migration
+          image: <YOUR_APPROVED_ACP_IMAGE_DIGEST>
+          command: ["python", "-m", "agent_control_plane.migrate"]
+          env:
+            - name: ACP_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: acp-db-owner
+                  key: url

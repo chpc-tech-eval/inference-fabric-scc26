@@ -1,0 +1,66 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: agent-control-plane-postgres
+  namespace: agent-control-plane
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  ports:
+    - port: 5432
+      targetPort: 5432
+  selector:
+    app: acp-postgres
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: agent-control-plane-postgres
+  namespace: agent-control-plane
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  serviceName: agent-control-plane-postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: acp-postgres
+  template:
+    metadata:
+      labels:
+        app: acp-postgres
+    spec:
+      securityContext:
+        fsGroup: 999  # Ensures non-root postgres user owns Cinder disk mount
+      containers:
+        - name: postgres
+          image: postgres:15-alpine
+          env:
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata  # Prevents collision with Cinder lost+found
+            - name: POSTGRES_DB
+              value: agent_control_plane
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: acp-db-owner
+                  key: username
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: acp-db-owner
+                  key: password
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: postgres-storage
+              mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres-storage
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        storageClassName: cinder-agent-retain
+        resources:
+          requests:
+            storage: 10Gi
