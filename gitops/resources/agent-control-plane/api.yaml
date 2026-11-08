@@ -45,7 +45,7 @@ spec:
             - name: ACP_TENANT_ID
               value: "student-platform"
             - name: ACP_JWT_PUBLIC_KEY_FILE
-              value: "/etc/acp-jwt/public-key.pem"
+              value: "/etc/acp-jwt/public.pem"
           volumeMounts:
             - name: jwt-verification-key
               mountPath: /etc/acp-jwt
