@@ -1,0 +1,12 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: cinder-agent-retain
+  annotations:
+    argocd.argoproj.io/sync-wave: "-3"
+provisioner: cinder.csi.openstack.org
+reclaimPolicy: Retain
+allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer
+parameters:
+  type: SSD
