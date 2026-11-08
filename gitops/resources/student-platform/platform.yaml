@@ -46,7 +46,7 @@ spec:
                   key: ADMIN_PASSWORD
             # --- Agent Control Plane (Week 4) ---
             - name: ACP_BASE_URL
-              value: "http://agent-control-plane-api.agent-control-plane.svc.cluster.local:8080"
+              value: "http://acp-api.agent-control-plane.svc.cluster.local:8080"
             - name: ACP_SIGNING_KEY_FILE
               value: "/var/run/acp-signing/private.pem"
             - name: ACP_JWT_ISSUER
