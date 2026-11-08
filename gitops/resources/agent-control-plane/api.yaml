@@ -33,7 +33,7 @@ spec:
       automountServiceAccountToken: false
       containers:
         - name: api
-          image: <APPROVED_ACP_API_IMAGE_DIGEST>  # Update once provided by CI/CD
+          image: ghcr.io/nyameko/agent-control-plane@sha256:750b0ceb03fc3d09ef71063b5424716f14944df7be082485689dba6f2ff68f1c  # instructor-pinned, approved by Val
           ports:
             - containerPort: 8080
           env:
@@ -41,7 +41,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: acp-db-app
-                  key: url
+                  key: ACP_DATABASE_URL
             - name: ACP_TENANT_ID
               value: "student-platform"
             - name: ACP_JWT_PUBLIC_KEY_FILE

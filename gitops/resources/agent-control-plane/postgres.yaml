@@ -30,6 +30,7 @@ spec:
       labels:
         app: acp-postgres
     spec:
+      automountServiceAccountToken: false
       securityContext:
         fsGroup: 999  # Ensures non-root postgres user owns Cinder disk mount
       containers:
@@ -41,20 +42,30 @@ spec:
             - name: POSTGRES_DB
               value: agent_control_plane
             - name: POSTGRES_USER
-              valueFrom:
-                secretKeyRef:
-                  name: acp-db-owner
-                  key: username
+              value: "acp_owner"
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: acp-db-owner
-                  key: password
+                  key: POSTGRES_PASSWORD
+            - name: ACP_APP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: acp-db-app
+                  key: ACP_APP_PASSWORD
           ports:
             - containerPort: 5432
           volumeMounts:
             - name: postgres-storage
               mountPath: /var/lib/postgresql/data
+            - name: bootstrap
+              mountPath: /docker-entrypoint-initdb.d
+              readOnly: true
+      volumes:
+        - name: bootstrap
+          configMap:
+            name: acp-postgres-bootstrap
+            defaultMode: 0555
   volumeClaimTemplates:
     - metadata:
         name: postgres-storage

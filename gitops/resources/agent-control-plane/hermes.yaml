@@ -21,7 +21,7 @@ spec:
         fsGroup: 1000
       containers:
         - name: hermes-worker
-          image: <APPROVED_HERMES_IMAGE_DIGEST>  # Update once provided by CI/CD
+          image: ghcr.io/nyameko/agent-control-plane-hermes@sha256:6ec37a755e57ef868a2fcce6052535588d14742bc85df75ab973dae811f1bdda  # instructor-pinned, approved by Val
           env:
             - name: HERMES_HOME
               value: /var/lib/hermes/admin-readonly
@@ -29,18 +29,20 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: acp-db-app
-                  key: url
+                  key: ACP_DATABASE_URL
             - name: ACP_MODEL
-              value: "<MODEL_ID>"  # Provided by Infrastructure
+              value: "qwen2.5-1.5b-instruct"  # CPU-first: llm-cpu --alias
             - name: ACP_MODEL_BASE_URL
-              value: "http://<INFRA_MODEL_ENDPOINT>/v1"  # Provided by Infrastructure
+              value: "http://llm-cpu.inference.svc.cluster.local:8080/v1"  # CPU-first: in-cluster llm-cpu
             - name: ACP_PROMETHEUS_URL
-              value: "http://prometheus-server.monitoring.svc.cluster.local:9090"
+              value: "http://prometheus-server.monitoring.svc.cluster.local:80"
+            - name: ACP_RUN_TIMEOUT_SECONDS
+              value: "300"  # CPU model answers take tens of seconds
             - name: ACP_MODEL_API_KEY
               valueFrom:
                 secretKeyRef:
                   name: acp-model
-                  key: api-key
+                  key: ACP_MODEL_API_KEY
           volumeMounts:
             - name: hermes-data
               mountPath: /var/lib/hermes/admin-readonly

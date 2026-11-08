@@ -5,8 +5,11 @@ namespace: agent-control-plane
 resources:
   - namespace.yaml
   - storage.yaml
+  - postgres-bootstrap.yaml
   - postgres.yaml
   - migration-job.yaml
+  - api.yaml
+  - hermes.yaml
   - acp-db-owner-sealed.yaml
   - acp-db-app-sealed.yaml
   - acp-verification-sealed.yaml
