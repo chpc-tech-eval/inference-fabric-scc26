@@ -15,11 +15,13 @@ spec:
       labels:
         app: student-platform
     spec:
+      securityContext:
+        fsGroup: 1000   # lets the non-root user read the mounted signing key
       imagePullSecrets:
         - name: ghcr-secret
       containers:
         - name: platform
-          image: ghcr.io/chpc-tech-eval/inference-fabric-scc26/student-platform:sha-8eef9300677c974d16c4decac2279078b97a0397
+          image: ghcr.io/chpc-tech-eval/inference-fabric-scc26/student-platform:sha-99b889b5cb1b6eb5e4808bbe0f50238b7e3d031e
           ports:
             - containerPort: 4321
           env:
@@ -42,6 +44,23 @@ spec:
                 secretKeyRef:
                   name: student-platform-app
                   key: ADMIN_PASSWORD
+            # --- Agent Control Plane (Week 4) ---
+            - name: ACP_BASE_URL
+              value: "http://agent-control-plane-api.agent-control-plane.svc.cluster.local:8080"
+            - name: ACP_SIGNING_KEY_FILE
+              value: "/var/run/acp-signing/private.pem"
+            - name: ACP_JWT_ISSUER
+              value: "quantum-platform"
+            - name: ACP_JWT_SUBJECT_PREFIX
+              value: "urn:quantum-platform:user:"
+            - name: ACP_TENANT_ID
+              value: "nyameko"
+            - name: ACP_DIAGNOSTIC
+              value: "quantum-platform-pod-readiness"
+          volumeMounts:
+            - name: acp-signing
+              mountPath: /var/run/acp-signing
+              readOnly: true
           readinessProbe:
             httpGet:
               path: /health
@@ -63,3 +82,11 @@ spec:
             runAsUser: 1000
             capabilities:
               drop: ["ALL"]
+      volumes:
+        - name: acp-signing
+          secret:
+            secretName: acp-signing
+            defaultMode: 0440   # group-readable (fsGroup 1000); not world-readable
+            items:
+              - key: private.pem   # the key name shown by: kubectl describe secret acp-signing
+                path: private.pem
