@@ -1,0 +1,21 @@
+** Alert 1793445202.3573579: - syslog,sshd,authentication_failed,gdpr_IV_35.7.d,gdpr_IV_32.2,gpg13_7.1,hipaa_164.312.b,invalid_login,nist_800_53_AU.14,nist_800_53_AC.7,nist_800_53_AU.6,pci_dss_10.2.4,pci_dss_10.2.5,pci_dss_10.6.1,tsc_CC6.1,tsc_CC6.8,tsc_CC7.2,tsc_CC7.3,
+2026 Oct 31 13:13:22 (k8s-cp-01.novalocal) any->journald
+Rule: 5710 (level 5) -> 'sshd: Attempt to login using a non-existent user'
+Src IP: <redacted-ip>
+Src Port: 46268
+Oct 31 11:13:22 k8s-cp-01.novalocal sshd-session[100114]: Invalid user nosuchuser from <redacted-ip> port 46268
+
+** Alert 1793445204.3574129: - syslog,sshd,authentication_failed,gdpr_IV_35.7.d,gdpr_IV_32.2,gpg13_7.1,hipaa_164.312.b,invalid_login,nist_800_53_AU.14,nist_800_53_AC.7,nist_800_53_AU.6,pci_dss_10.2.4,pci_dss_10.2.5,pci_dss_10.6.1,tsc_CC6.1,tsc_CC6.8,tsc_CC7.2,tsc_CC7.3,
+2026 Oct 31 13:13:24 (k8s-cp-01.novalocal) any->journald
+Rule: 5710 (level 5) -> 'sshd: Attempt to login using a non-existent user'
+Src IP: <redacted-ip>
+Src Port: 46274
+Oct 31 11:13:22 k8s-cp-01.novalocal sshd-session[100116]: Invalid user nosuchuser from <redacted-ip> port 46274
+
+** Alert 1793445204.3574679: - syslog,sshd,authentication_failed,gdpr_IV_35.7.d,gdpr_IV_32.2,gpg13_7.1,hipaa_164.312.b,invalid_login,nist_800_53_AU.14,nist_800_53_AC.7,nist_800_53_AU.6,pci_dss_10.2.4,pci_dss_10.2.5,pci_dss_10.6.1,tsc_CC6.1,tsc_CC6.8,tsc_CC7.2,tsc_CC7.3,
+2026 Oct 31 13:13:24 (k8s-cp-01.novalocal) any->journald
+Rule: 5710 (level 5) -> 'sshd: Attempt to login using a non-existent user'
+Src IP: <redacted-ip>
+Src Port: 46288
+Oct 31 11:13:22 k8s-cp-01.novalocal sshd-session[100118]: Invalid user nosuchuser from <redacted-ip> port 46288
+
