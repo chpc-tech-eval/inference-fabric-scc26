@@ -1,0 +1,35 @@
+# One do-nothing pod. No Service, no network use, no permissions.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: diagnostic-target
+  namespace: quantum-platform
+  labels:
+    app: diagnostic-target
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: diagnostic-target
+  template:
+    metadata:
+      labels:
+        app: diagnostic-target
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65535
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: pause
+          image: registry.k8s.io/pause:3.10
+          resources:
+            requests: { cpu: 5m, memory: 8Mi }
+            limits: { cpu: 10m, memory: 16Mi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]

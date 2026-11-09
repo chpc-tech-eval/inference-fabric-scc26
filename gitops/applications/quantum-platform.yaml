@@ -1,0 +1,22 @@
+# Tells Argo CD: deploy gitops/resources/quantum-platform into namespace quantum-platform.
+# selfHeal undoes manual changes (the drift test).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: quantum-platform
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/chpc-tech-eval/inference-fabric-scc26.git
+    targetRevision: dev
+    path: gitops/resources/quantum-platform
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: quantum-platform
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
