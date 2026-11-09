@@ -54,7 +54,7 @@ spec:
             - name: ACP_JWT_SUBJECT_PREFIX
               value: "urn:quantum-platform:user:"
             - name: ACP_TENANT_ID
-              value: "nyameko"
+              value: "student-platform"
             - name: ACP_DIAGNOSTIC
               value: "quantum-platform-pod-readiness"
           volumeMounts:
