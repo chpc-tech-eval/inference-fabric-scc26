@@ -1,0 +1,7 @@
+# Week 5 model download paths (from a pod)
+# run at: 2026-11-09T16:31:49Z by gavin
+
+pod/dltest created
+huggingface 206
+ollama-registry 200
+pod "dltest" deleted from default namespace
