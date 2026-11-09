@@ -1,0 +1,6 @@
+# Exists only so the ACP's fixed diagnostic (which reads namespace "quantum-platform")
+# has something real to count. See diagnostic.py in nyameko/agent-control-plane.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: quantum-platform
