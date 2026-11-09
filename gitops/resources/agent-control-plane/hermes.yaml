@@ -38,6 +38,8 @@ spec:
               value: "http://prometheus-server.monitoring.svc.cluster.local:80"
             - name: ACP_RUN_TIMEOUT_SECONDS
               value: "300"  # CPU model answers take tens of seconds
+            - name: ACP_TENANT_ID
+              value: "student-platform"
             - name: ACP_MODEL_API_KEY
               valueFrom:
                 secretKeyRef:
