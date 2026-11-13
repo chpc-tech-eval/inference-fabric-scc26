@@ -1,0 +1,4 @@
+GGUF SHA256: 6a1a2eb6d15622bf3c96857206351ba97e1af16c30d7a74ee38970e434e9407e  /models/qwen2.5-1.5b-instruct-q4_k_m.gguf
+Endpoint: http://llm-cpu.inference.svc.cluster.local:8080/v1 (model: qwen2.5-1.5b-instruct)
+Health: {"status":"ok"} | Completion: "Ready." (26.52 tok/s)
+Hermes Restart: agent-control-plane-hermes-0 deleted & rescheduled to k8s-worker-02; state.db (266240B) on pvc-355237a7-3d4a-461e-b5bb-a14252335267 and 2 rows in agent_control_plane.acp1.run persisted.
