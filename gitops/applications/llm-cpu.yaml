@@ -6,11 +6,11 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/chpc-tech-eval/inference-fabric-scc26.git
+    repoURL: 'https://github.com/chpc-tech-eval/inference-fabric-scc26.git'
     targetRevision: dev
     path: gitops/resources/llm-cpu
   destination:
-    server: https://kubernetes.default.svc
+    server: 'https://kubernetes.default.svc'
     namespace: inference
   syncPolicy:
     automated:
@@ -18,4 +18,3 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
-```[cite: 2]
