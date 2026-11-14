@@ -1,0 +1,187 @@
+# Network policies for namespace agent-control-plane.
+# Default deny in both directions, then only the allow-list from the Week 4 guide.
+# Selectors use the labels the pods REALLY carry on our cluster:
+#   API app=acp-api | worker app=acp-hermes | postgres app=acp-postgres
+#   migration job job-name=acp-db-migration | website app=student-platform
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: acp-default-deny
+  annotations:
+    argocd.argoproj.io/sync-wave: '-3'
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: acp-dns
+  annotations:
+    argocd.argoproj.io/sync-wave: '-3'
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: acp-api-from-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: '-3'
+spec:
+  podSelector:
+    matchLabels:
+      app: acp-api
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: student-platform
+      podSelector:
+        matchLabels:
+          app: student-platform
+    ports:
+    - protocol: TCP
+      port: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: acp-database-ingress
+  annotations:
+    argocd.argoproj.io/sync-wave: '-3'
+spec:
+  podSelector:
+    matchLabels:
+      app: acp-postgres
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchExpressions:
+        - key: app
+          operator: In
+          values:
+          - acp-api
+          - acp-hermes
+    - podSelector:
+        matchLabels:
+          job-name: acp-db-migration
+    ports:
+    - protocol: TCP
+      port: 5432
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: acp-database-egress-api-worker
+  annotations:
+    argocd.argoproj.io/sync-wave: '-3'
+spec:
+  podSelector:
+    matchExpressions:
+    - key: app
+      operator: In
+      values:
+      - acp-api
+      - acp-hermes
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: acp-postgres
+    ports:
+    - protocol: TCP
+      port: 5432
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: acp-database-egress-migration
+  annotations:
+    argocd.argoproj.io/sync-wave: '-3'
+spec:
+  podSelector:
+    matchLabels:
+      job-name: acp-db-migration
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: acp-postgres
+    ports:
+    - protocol: TCP
+      port: 5432
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: acp-prometheus-egress
+  annotations:
+    argocd.argoproj.io/sync-wave: '-3'
+spec:
+  podSelector:
+    matchLabels:
+      app: acp-hermes
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: monitoring
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: prometheus
+          app.kubernetes.io/component: server
+    ports:
+    - protocol: TCP
+      port: 9090
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: acp-model-egress
+  annotations:
+    argocd.argoproj.io/sync-wave: '-3'
+spec:
+  podSelector:
+    matchLabels:
+      app: acp-hermes
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: inference
+      podSelector:
+        matchLabels:
+          app: llm-cpu
+    ports:
+    - protocol: TCP
+      port: 8080
