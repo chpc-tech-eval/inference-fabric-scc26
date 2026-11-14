@@ -16,7 +16,7 @@ LISTEN 0      4096    10.151.0.100:9200      0.0.0.0:*    users:(("haproxy",pid=
 
 ## 3. Terraform (on dev)
 
-Terraform has compared your real infrastructure against your configuration
+Terraform has compared the real infrastructure against the configuration
 and found no differences, so no changes are needed.
 
 ## 4. Service types in the new namespaces
