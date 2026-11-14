@@ -1,0 +1,64 @@
+# Network policies for namespace inference (the in-cluster CPU model server, llm-cpu).
+# Default deny on INGRESS only: the model's init container must download the model
+# file from Hugging Face, so egress is left open here on purpose.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: inference-default-deny-ingress
+  annotations:
+    argocd.argoproj.io/sync-wave: '-3'
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: llm-cpu-from-acp-worker
+  annotations:
+    argocd.argoproj.io/sync-wave: '-3'
+spec:
+  podSelector:
+    matchLabels:
+      app: llm-cpu
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: agent-control-plane
+      podSelector:
+        matchLabels:
+          app: acp-hermes
+    ports:
+    - protocol: TCP
+      port: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: llm-cpu-from-prometheus
+  annotations:
+    argocd.argoproj.io/sync-wave: '-3'
+spec:
+  podSelector:
+    matchLabels:
+      app: llm-cpu
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: monitoring
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: prometheus
+          app.kubernetes.io/component: server
+    ports:
+    - protocol: TCP
+      port: 8080
+# Week 5: add a policy allowing the benchmark client's namespace to reach llm-cpu:8080
+# once that namespace and its pod labels are decided.
