@@ -21,6 +21,6 @@
 - The Ollama model was pulled with `kubectl exec ollama pull`, a one-off data download rather than a configuration change.
 - Ollama's thread count is set through a derived model (Modelfile), not a flag, so the model name the harness uses differs.
 - The two tools use different GGUF packaging: the model IDs are not comparable hashes, so both fingerprints are recorded to show each ran Qwen2.5-1.5B-Instruct Q4_K_M.
-- Derived model created once after the pull, recipe in `docs/bench/Modelfile.qwen2.5-1.5b-bench`:
-  `ollama create qwen2.5-1.5b-bench -f docs/bench/Modelfile.qwen2.5-1.5b-bench`
+- Derived model created once after the pull, recipe in `bench/Modelfile.qwen2.5-1.5b-bench`:
+  `ollama create qwen2.5-1.5b-bench -f bench/Modelfile.qwen2.5-1.5b-bench`
   (base model ID `65ec06548149` stays the fingerprint for the manifests).
