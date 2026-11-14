@@ -1,0 +1,48 @@
+# Week 4 exposure checks (after ACP, llm-cpu and ollama-cpu deployed)
+# run at: 2026-11-14T15:12:18Z by gavin
+
+## 1. Public paths through HAProxy/Traefik
+/v1/admin/tasks    404
+/v1/models         404
+/health            404
+/api/tags          404
+
+## 2. HAProxy listeners
+LISTEN 0      4096    10.151.0.100:6443      0.0.0.0:*    users:(("haproxy",pid=878,fd=6))                        
+LISTEN 0      4096    10.151.0.100:443       0.0.0.0:*    users:(("haproxy",pid=878,fd=8))                        
+LISTEN 0      4096    10.151.0.100:80        0.0.0.0:*    users:(("haproxy",pid=878,fd=7))                        
+LISTEN 0      4096    10.151.0.100:8404      0.0.0.0:*    users:(("haproxy",pid=878,fd=10))                       
+LISTEN 0      4096    10.151.0.100:9200      0.0.0.0:*    users:(("haproxy",pid=878,fd=9))                        
+
+## 3. Terraform (on dev)
+
+Terraform has compared your real infrastructure against your configuration
+and found no differences, so no changes are needed.
+
+## 4. Service types in the new namespaces
+NAME         TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)     AGE
+llm-cpu      ClusterIP   10.102.56.157    <none>        8080/TCP    24h
+ollama-cpu   ClusterIP   10.104.106.112   <none>        11434/TCP   3h30m
+
+NAME                           TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
+acp-api                        ClusterIP   10.100.207.255   <none>        8080/TCP   5d20h
+agent-control-plane-postgres   ClusterIP   10.108.143.113   <none>        5432/TCP   6d
+
+No resources found in quantum-platform namespace.
+
+## 5. Every NodePort/LoadBalancer service in the cluster
+traefik               traefik                                   NodePort    10.104.63.125    <none>        9200:30920/TCP,80:30080/TCP,443:30443/TCP   21d
+
+## 6. Ingress routes in the new namespaces
+inference:
+No resources found in inference namespace.
+agent-control-plane:
+No resources found in agent-control-plane namespace.
+quantum-platform:
+No resources found in quantum-platform namespace.
+
+## 7. ACP API from inside the cluster, without a token
+pod/acptest created
+health 200
+tasks-no-token 401
+pod "acptest" deleted from student-platform namespace
