@@ -1,0 +1,54 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: bench-
+  namespace: bench
+  labels:
+    app: bench-harness
+spec:
+  backoffLimit: 0              # a failed run stays failed; no retries muddying results
+  template:
+    metadata:
+      labels:
+        app: bench-harness
+    spec:
+      restartPolicy: Never
+      # TODO: set once Infrastructure confirms which node runs the harness.
+      # k8s-worker-01 holds the 6-CPU inference server; k8s-worker-02 carries
+      # 4.2 CPU of other limits (see evidence/week4/capacity.md).
+      # nodeSelector:
+      #   kubernetes.io/hostname: <NODE>
+      containers:
+        - name: harness
+          image: "REPLACE-WITH-HARNESS-IMAGE@sha256:REPLACE-WITH-DIGEST"   # from CI/CD
+          env:
+            - name: RUN_ID
+              value: "REPLACE-run-001"
+            - name: TARGET_URL
+              value: "http://ollama-cpu.inference.svc.cluster.local:11434/v1"
+              # llama.cpp: http://llm-cpu.inference.svc.cluster.local:8080/v1
+            - name: MODEL
+              value: "qwen2.5-1.5b-bench"
+              # llama.cpp: qwen2.5-1.5b-instruct
+            - name: PARALLEL
+              value: "4"
+            - name: CTX
+              value: "4096"
+            - name: API_KEY            # llama.cpp only; Ollama has no key
+              valueFrom:
+                secretKeyRef:
+                  name: bench-llm-key  # sealed copy for this namespace (from CI/CD)
+                  key: api-key
+                  optional: true
+            - name: RESULTS_DIR
+              value: "/results"
+          resources:
+            requests: { cpu: "500m", memory: 512Mi }
+            limits:   { cpu: "500m", memory: 512Mi }
+          volumeMounts:
+            - name: results
+              mountPath: /results
+      volumes:
+        - name: results
+          persistentVolumeClaim:
+            claimName: bench-results
