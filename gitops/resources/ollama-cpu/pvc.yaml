@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ollama-cpu-models
+  namespace: inference
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: cinder-default
+  resources:
+    requests:
+      storage: 10Gi
