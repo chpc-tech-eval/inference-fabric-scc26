@@ -1,0 +1,44 @@
+# Week 5 node neighbours (benchmark servers pinned to k8s-worker-01)
+# run at: 2026-11-14T15:10:19Z by gavin
+
+## 1. Where the inference servers run
+NAME                       READY   STATUS    RESTARTS   AGE    IP            NODE                      NOMINATED NODE   READINESS GATES
+llm-cpu-77d9c767c8-24674   1/1     Running   0          138m   10.244.0.57   k8s-worker-01.novalocal   <none>           <none>
+
+## 2. Everything else on k8s-worker-01
+agent-control-plane acp-db-migration-8qz66 Completed
+argocd argocd-application-controller-0 Running
+argocd argocd-dex-server-6fb56f4676-5ldd7 Running
+argocd argocd-repo-server-fb87d8994-fr7vb Running
+cert-manager cert-manager-76ffbfcbfc-wvlzm Running
+cert-manager cert-manager-cainjector-6468bc96c7-d2bcm Running
+cert-manager cert-manager-webhook-558c6d4f4d-qfzgv Running
+inference llm-cpu-77d9c767c8-24674 Running
+kube-system cilium-envoy-hs8qb Running
+kube-system cilium-gsjdq Running
+kube-system kube-proxy-fpbsc Running
+kube-system openstack-cinder-csi-controllerplugin-b64d94ccf-8hdf8 Running
+kube-system openstack-cinder-csi-nodeplugin-886w8 Running
+kube-system sealed-secrets-controller-78d695b78f-fngzk Running
+monitoring grafana-7dd4b4c986-wp2cb Running
+monitoring prometheus-prometheus-node-exporter-v56p5 Running
+monitoring prometheus-server-fdbcdc58c-mxbt5 Running
+quantum-platform diagnostic-target-6d6f977b96-zddqv Running
+student-platform postgres-0 Running
+traefik traefik-psz89 Running
+
+## 3. CPU and memory already promised on k8s-worker-01
+Allocated resources:
+  (Total limits may be over 100 percent, i.e., overcommitted.)
+  Resource           Requests      Limits
+  --------           --------      ------
+  cpu                6105m (76%)   7010m (87%)
+  memory             6162Mi (39%)  7184Mi (45%)
+  ephemeral-storage  0 (0%)        0 (0%)
+  hugepages-1Gi      0 (0%)        0 (0%)
+  hugepages-2Mi      0 (0%)        0 (0%)
+
+## Notes
+- Prometheus and Grafana share this node; Prometheus scraping adds a little load during runs.
+- The harness runs on k8s-worker-02, so it does not compete with the server under test.
+- Each run also saves its own snapshot via bench/quiet-node.sh.
