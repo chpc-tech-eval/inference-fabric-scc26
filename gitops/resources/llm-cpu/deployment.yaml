@@ -36,7 +36,7 @@ spec:
               mountPath: /models
       containers:
         - name: llama-server
-          image: ghcr.io/ggml-org/llama.cpp:server
+          image: ghcr.io/ggml-org/llama.cpp@sha256:e3032ea0712da96dec820c770626385de4322dd06619fb5829256a504bbc9375
           args:
             - "-m"
             - "/models/qwen2.5-1.5b-instruct-q4_k_m.gguf"
