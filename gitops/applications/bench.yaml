@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: bench
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/chpc-tech-eval/inference-fabric-scc26.git'
+    targetRevision: dev
+    path: gitops/resources/bench
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: bench
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

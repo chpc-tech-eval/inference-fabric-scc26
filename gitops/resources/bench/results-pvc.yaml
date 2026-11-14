@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: bench-results
+  namespace: bench
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: cinder-default
+  resources:
+    requests:
+      storage: 1Gi

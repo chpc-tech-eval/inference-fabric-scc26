@@ -9,7 +9,7 @@
 | Context | `--ctx-size 16384` (4 slots x 4096) | `num_ctx 4096` per slot (`OLLAMA_CONTEXT_LENGTH=4096`) |
 | Model | `qwen2.5-1.5b-instruct-q4_k_m.gguf` | `qwen2.5:1.5b` (1.5B, Q4_K_M) |
 | Model fingerprint | sha256 `6a1a2eb6d15622bf3c96857206351ba97e1af16c30d7a74ee38970e434e9407e` | ID `65ec06548149` |
-| Image | `ghcr.io/ggml-org/llama.cpp:server` (not yet pinned by digest) | `ollama/ollama:0.40.16@sha256:910d0d8107b538fb0894e63163eb195de0cc7aefcbc666dc62d3b18f71124592` |
+| Image | `ghcr.io/ggml-org/llama.cpp@sha256:e3032ea0712da96dec820c770626385de4322dd06619fb5829256a504bbc9375` | `ollama/ollama:0.40.16@sha256:910d0d8107b538fb0894e63163eb195de0cc7aefcbc666dc62d3b18f71124592` |
 | Keep-alive | n/a (model always loaded) | `OLLAMA_KEEP_ALIVE=-1` |
 | Harness URL | `http://llm-cpu.inference.svc.cluster.local:8080/v1` | `http://ollama-cpu.inference.svc.cluster.local:11434/v1` |
 | Harness model name | `qwen2.5-1.5b-instruct` | `qwen2.5-1.5b-bench` |
