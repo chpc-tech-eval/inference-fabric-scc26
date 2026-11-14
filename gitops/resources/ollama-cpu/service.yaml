@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ollama-cpu
+  namespace: inference
+spec:
+  type: ClusterIP
+  selector:
+    app: ollama-cpu
+  ports:
+    - port: 11434
+      targetPort: 11434
