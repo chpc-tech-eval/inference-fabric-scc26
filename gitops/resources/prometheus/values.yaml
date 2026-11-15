@@ -15,7 +15,20 @@ alertmanager:
 prometheus-pushgateway:
   enabled: false
 
+extraSecretMounts:
+    - name: llm-cpu-metrics-key
+      mountPath: /etc/prometheus/secrets/llm-cpu
+      secretName: llm-cpu-metrics-key
+      readOnly: true
+
 extraScrapeConfigs: |
   - job_name: haproxy
     static_configs:
       - targets: ['api-lb-01:8404']
+ - job_name: llm-cpu
+    metrics_path: /metrics
+    authorization:
+      type: Bearer
+      credentials_file: /etc/prometheus/secrets/llm-cpu/api-key
+    static_configs:
+      - targets: ['llm-cpu.inference.svc.cluster.local:8080']

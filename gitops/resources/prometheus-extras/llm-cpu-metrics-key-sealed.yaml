@@ -1,0 +1,13 @@
+---
+apiVersion: bitnami.com/v1alpha1
+kind: SealedSecret
+metadata:
+  name: llm-cpu-metrics-key
+  namespace: monitoring
+spec:
+  encryptedData:
+    api-key: AgCxZiZH1dgWGAnI3j5rvDJq/kbPGMXxXKKEj3Xiq8tkD7OJ7NUF1mmMXrHXj3zSXzPHbZqpEq7L7QdfwsAhDp5jUlbUe/mss3jDi/tVAXyiF+gxSMYMhkFJeeiQx+GqbsNCeVuvusi+l+L/bnl045+7EbedmjrckgC3FnXRl5/5adITbGb6x+5jbB7Xjs32BHvcSSo6k9gkzwXBfaGka1+rg6dwgmoGaqcE4UTGFSS40C3g/U+W04Yb/mr+nUPG0tA9jTSvsK6e+dg7haTop2A8VfLFFOOU0PlDd8ZeQas9y1FX/SBJfPobA2KZw7CtbopCQ5cdg1JvAHQRKGN2l+qhU4SEQgJSX5Fyc0keN56BzJnpIWbco9IfQ4dRNnA/BqMpY/onAA6itda8qd9Zrkxg2/jTRKrDJaMFI5WzDcdo2Igh/ZzIYoekb9ykosxmmd3CiXQuPNIDaHJnhUSJFWrn/y7+TP5UZukszphNNC3DqB/1G98RIr7h8PSCrRq0IuACfDBH905Y62qQYZBp+3+M5U/0AwEP9iGUifUh2rCJZdAwnEyPn0pcKMNVEUPRTeUZ1AJ96zq4NGTPsfs+193EKapqFEo1fUW0CaSgAzDaGjMFMtOafUL7Clf90QS/HA5Dag8TwNSrkfIe8W+I+2WCbIIf46VxuJBZmiroWs1gP6aPOWXGG2+0MPoocacmj9npTjM8Dc4/UaJ+l015j3lby1Es8H1X5QS/KJF4yyWCIRByyNYgWl5sKnhjTk8f29I=
+  template:
+    metadata:
+      name: llm-cpu-metrics-key
+      namespace: monitoring

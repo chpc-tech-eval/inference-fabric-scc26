@@ -1,0 +1,15 @@
+Captured: 2026-11-14T16:48:54Z
+
+$ running image digests
+agent-control-plane/acp-api-68f7589bbc-b9gqw  api=ghcr.io/nyameko/agent-control-plane@sha256:750b0ceb03fc3d09ef71063b5424716f14944df7be082485689dba6f2ff68f1c  
+agent-control-plane/acp-db-migration-8qz66  migration=ghcr.io/nyameko/agent-control-plane@sha256:750b0ceb03fc3d09ef71063b5424716f14944df7be082485689dba6f2ff68f1c  
+agent-control-plane/agent-control-plane-hermes-0  hermes-worker=ghcr.io/nyameko/agent-control-plane-hermes@sha256:6ec37a755e57ef868a2fcce6052535588d14742bc85df75ab973dae811f1bdda  
+agent-control-plane/agent-control-plane-postgres-0  postgres=docker.io/library/postgres@sha256:aae6554de426ae1990f1a939ff183a0299146cf7142a6f4c379c3357af9cc2d8  
+inference/llm-cpu-77d9c767c8-24674  llama-server=ghcr.io/ggml-org/llama.cpp@sha256:e3032ea0712da96dec820c770626385de4322dd06619fb5829256a504bbc9375  
+student-platform/postgres-0  postgres=docker.io/library/postgres@sha256:54e0dd8e8cddcdbb9156c2486eed5a43eccb7214d7c6828097d41ce049fb3984  
+student-platform/student-platform-857bcc9999-tvsz8  platform=ghcr.io/chpc-tech-eval/inference-fabric-scc26/student-platform@sha256:f69d7ec54ac96bb16ebf25b63ce4492aa77f8ede7d41c11914f2d43b3b8f02ed  
+
+$ model file sha256
+6a1a2eb6d15622bf3c96857206351ba97e1af16c30d7a74ee38970e434e9407e  /models/qwen2.5-1.5b-instruct-q4_k_m.gguf
+
+$ migration job log (schema version)
