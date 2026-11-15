@@ -1,0 +1,39 @@
+Captured: 2026-11-15T19:41:15Z
+
+## 1. No Kubernetes token
+acp-api-68f7589bbc-b9gqw  automount=false
+acp-db-migration-8qz66  automount=false
+agent-control-plane-hermes-0  automount=false
+agent-control-plane-postgres-0  automount=false
+No resources found in agent-control-plane namespace.
+ls: cannot access '/var/run/secrets/kubernetes.io/serviceaccount': No such file or directory
+command terminated with exit code 2
+(no token directory)
+
+## 2. No public route
+No resources found in agent-control-plane namespace.
+No resources found in inference namespace.
+
+## 3. Model refuses a request without the key (want HTTP 401)
+HTTP 401
+
+## 5. Worker cannot reach the Kubernetes API (want BLOCKED)
+BLOCKED: TimeoutError
+
+## 6. Signing key only in student-platform
+student-platform      acp-signing                    Opaque                           1      8d
+
+## Supporting: network policies
+NAME                             POD-SELECTOR                  AGE
+acp-api-from-platform            app=acp-api                   26h
+acp-database-egress-api-worker   app in (acp-api,acp-hermes)   26h
+acp-database-egress-migration    job-name=acp-db-migration     26h
+acp-database-ingress             app=acp-postgres              26h
+acp-default-deny                 <none>                        26h
+acp-dns                          <none>                        26h
+acp-model-egress                 app=acp-hermes                26h
+acp-prometheus-egress            app=acp-hermes                26h
+NAME                             POD-SELECTOR   AGE
+inference-default-deny-ingress   <none>         26h
+llm-cpu-from-acp-worker          app=llm-cpu    26h
+llm-cpu-from-prometheus          app=llm-cpu    26h
