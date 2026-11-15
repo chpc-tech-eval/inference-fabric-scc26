@@ -17,6 +17,9 @@ spec:
     - repoURL: https://github.com/chpc-tech-eval/inference-fabric-scc26.git
       targetRevision: dev
       ref: values
+    - repoURL: https://github.com/chpc-tech-eval/inference-fabric-scc26.git
+      targetRevision: dev
+      path: gitops/resources/prometheus-extras
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring
