@@ -5,6 +5,12 @@ server:
     size: 10Gi
     # storageClass: <only if the default isn't Cinder>
 
+  extraSecretMounts:
+    - name: llm-cpu-metrics-key
+      mountPath: /etc/prometheus/secrets/llm-cpu
+      secretName: llm-cpu-metrics-key
+      readOnly: true
+
 prometheus-node-exporter:
   enabled: true
 kube-state-metrics:
@@ -15,17 +21,11 @@ alertmanager:
 prometheus-pushgateway:
   enabled: false
 
-extraSecretMounts:
-    - name: llm-cpu-metrics-key
-      mountPath: /etc/prometheus/secrets/llm-cpu
-      secretName: llm-cpu-metrics-key
-      readOnly: true
-
 extraScrapeConfigs: |
   - job_name: haproxy
     static_configs:
       - targets: ['api-lb-01:8404']
- - job_name: llm-cpu
+  - job_name: llm-cpu
     metrics_path: /metrics
     authorization:
       type: Bearer
