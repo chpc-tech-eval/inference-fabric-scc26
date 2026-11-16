@@ -1,0 +1,93 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dashboard-llm-cpu
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  llm-cpu.json: |
+    {
+      "title": "CPU Model Server (llm-cpu)",
+      "uid": "llm-cpu",
+      "timezone": "utc",
+      "refresh": "30s",
+      "schemaVersion": 39,
+      "version": 1,
+      "time": { "from": "now-3h", "to": "now" },
+      "tags": ["week4", "llm-cpu"],
+      "panels": [
+        {
+          "id": 1, "type": "stat", "title": "Metrics target up",
+          "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [ { "refId": "A", "expr": "up{job=\"llm-cpu\"}", "instant": true } ],
+          "fieldConfig": { "defaults": { "thresholds": { "mode": "absolute", "steps": [ { "color": "red", "value": null }, { "color": "green", "value": 1 } ] } }, "overrides": [] }
+        },
+        {
+          "id": 2, "type": "stat", "title": "Requests processing",
+          "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [ { "refId": "A", "expr": "llamacpp:requests_processing", "instant": true } ],
+          "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] }
+        },
+        {
+          "id": 3, "type": "stat", "title": "Requests deferred (queued)",
+          "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [ { "refId": "A", "expr": "llamacpp:requests_deferred", "instant": true } ],
+          "fieldConfig": { "defaults": { "unit": "short", "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "orange", "value": 1 } ] } }, "overrides": [] }
+        },
+        {
+          "id": 4, "type": "stat", "title": "Generation speed (tokens/s)",
+          "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [ { "refId": "A", "expr": "llamacpp:predicted_tokens_seconds", "instant": true } ],
+          "fieldConfig": { "defaults": { "unit": "short", "decimals": 1 }, "overrides": [] }
+        },
+        {
+          "id": 5, "type": "timeseries", "title": "Speed: generation and prompt processing (tokens/s)",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            { "refId": "A", "legendFormat": "generation", "expr": "llamacpp:predicted_tokens_seconds" },
+            { "refId": "B", "legendFormat": "prompt", "expr": "llamacpp:prompt_tokens_seconds" }
+          ],
+          "fieldConfig": { "defaults": { "unit": "short", "min": 0 }, "overrides": [] }
+        },
+        {
+          "id": 6, "type": "timeseries", "title": "Requests in flight and queued",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            { "refId": "A", "legendFormat": "processing", "expr": "llamacpp:requests_processing" },
+            { "refId": "B", "legendFormat": "deferred", "expr": "llamacpp:requests_deferred" }
+          ],
+          "fieldConfig": { "defaults": { "unit": "short", "min": 0 }, "overrides": [] }
+        },
+        {
+          "id": 7, "type": "timeseries", "title": "Container CPU used (cores)",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [ { "refId": "A", "legendFormat": "llama-server", "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"inference\",container=\"llama-server\"}[5m]))" } ],
+          "fieldConfig": { "defaults": { "unit": "short", "min": 0 }, "overrides": [] }
+        },
+        {
+          "id": 8, "type": "timeseries", "title": "Container memory (working set)",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [ { "refId": "A", "legendFormat": "llama-server", "expr": "sum(container_memory_working_set_bytes{namespace=\"inference\",container=\"llama-server\"})" } ],
+          "fieldConfig": { "defaults": { "unit": "bytes", "min": 0 }, "overrides": [] }
+        },
+        {
+          "id": 9, "type": "timeseries", "title": "Tokens per second over 5 min (from counters)",
+          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 20 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            { "refId": "A", "legendFormat": "generated", "expr": "rate(llamacpp:tokens_predicted_total[5m])" },
+            { "refId": "B", "legendFormat": "prompt processed", "expr": "rate(llamacpp:prompt_tokens_total[5m])" }
+          ],
+          "fieldConfig": { "defaults": { "unit": "short", "min": 0 }, "overrides": [] }
+        }
+      ]
+    }
