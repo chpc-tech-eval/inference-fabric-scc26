@@ -1,0 +1,38 @@
+# Week 4: Hermes team-image fix (CPU model)
+# run at: 2026-11-17T19:02:49Z by gavin
+
+## Problem
+1. Hermes tried to pip install boto3 at startup; egress is denied, so runs hit hermes_timeout (300 s).
+2. Hermes refuses models under 64K context; llm-cpu gives 4096 per request (admin run has zero tools).
+
+## Fix
+Team image = instructor image + images/acp-hermes/patch_acp.py (3 checked edits).
+Base:  ghcr.io/nyameko/agent-control-plane-hermes@sha256:6ec37a755e57ef868a2fcce6052535588d14742bc85df75ab973dae811f1bdda
+Pulled with a sealed copy of ghcr-secret (package is private). ACP_HERMES_MIN_CONTEXT=4096.
+
+## Image running in the Hermes pod
+ghcr.io/chpc-tech-eval/inference-fabric-scc26/acp-hermes@sha256:187720bd32aa05c2400af94eaf80ecb388612d80c7003c80b84c415d6b5a9bd6
+
+## Fix present inside the running pod
+lazy installs off (config): True
+lazy installs off (env):    True
+context floor patch:        True
+ACP_HERMES_MIN_CONTEXT =    4096
+
+## Latest runs (before: 2x hermes_timeout, after: succeeded)
+SET
+                  id                  |  status   |         model         |          started_at           | seconds |  failure_code  |                                                                                                                                                 explanation                                                                                                                                                  
+--------------------------------------+-----------+-----------------------+-------------------------------+---------+----------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ 08cd9ee5-5c6f-41c5-9f77-69a269b40099 | succeeded | qwen2.5-1.5b-instruct | 2026-11-17 19:00:04.833454+00 |      14 |                | This diagnostic evidence shows the count of Ready conditions for Kubernetes pods in the "quantum-platform" namespace, as observed on November 17, 2026, at 19:00:04 UTC. The Ready condition is true for one instance of the pod. The total number of observed counts is 1, and the Ready counts are not ind
+ 24e43ab1-e2fa-424e-a188-992461c68739 | failed    | qwen2.5-1.5b-instruct | 2026-11-16 09:00:25.589637+00 |     301 | hermes_timeout | 
+ cd3c846b-4d41-45c9-afba-d215235e5ce7 | failed    | qwen2.5-1.5b-instruct | 2026-11-15 20:28:18.382369+00 |     300 | hermes_timeout | 
+(3 rows)
+
+
+## llm-cpu timing for the explanation (from its log)
+4688.35.906.567 I slot print_timing: id  1 | task 2200 |   graph reallocs =          0    /     0        (same size) / (changed size)
+4688.39.098.139 I slot print_timing: id  2 | task 2202 | prompt eval time =    3192.67 ms /   722 tokens (    4.42 ms per token,   226.14 tokens per second)
+4688.39.098.144 I slot print_timing: id  2 | task 2202 |        eval time =    3876.33 ms /    93 tokens (   42.13 ms per token,    23.73 tokens per second)
+4688.39.098.145 I slot print_timing: id  2 | task 2202 |       total time =    7069.00 ms /   815 tokens
+4688.39.098.147 I slot print_timing: id  2 | task 2202 |    graphs reused =        142
+4688.39.098.148 I slot print_timing: id  2 | task 2202 |   graph reallocs =          0    /     0        (same size) / (changed size)
