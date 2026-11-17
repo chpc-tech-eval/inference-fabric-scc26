@@ -23,3 +23,4 @@ Thumbs.db
 secrets-private/
 infrastructure/ansible/inventories/private/
 !infrastructure/ansible/files/wazuh-indexer-root-ca.pem
+__pycache__/
