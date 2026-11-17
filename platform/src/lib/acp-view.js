@@ -1,8 +1,9 @@
 // Turns ACP responses into what the staff page shows. Pure functions, easy to test.
 //
-// ASSUMPTION TO VERIFY: the ACP's exact JSON field names are not in our guide (they are in
-// agent-control-plane/docs/12-phase1.md). This file looks in the likely places. The detail page
-// also shows the full raw response, so nothing is hidden if a name here is wrong. Fix names HERE only.
+// Field names verified against the ACP source (db.py FIELDS + task_detail): the task response is FLAT:
+// task_id, requested_by, created_at, run_id, status, model, runtime_revision, started_at, finished_at,
+// evidence, summary (the model's explanation), failure_code, events[{id, kind, occurred_at, data}].
+// The detail page also shows the full raw response. Fix names HERE only.
 import { AcpError, AcpUnavailable } from './acp.js';
 
 const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -30,7 +31,7 @@ export function normalizeDetail(data) {
     task,
     run,
     evidence: d.evidence ?? run?.evidence ?? task.evidence ?? null,
-    explanation: d.explanation ?? run?.explanation ?? task.explanation ?? null,
+    explanation: d.summary ?? d.explanation ?? run?.explanation ?? task.explanation ?? null,
     events: Array.isArray(events) ? events : [],
   };
 }
@@ -61,17 +62,20 @@ export function fmtTime(v) {
 }
 
 const toMs = (v) => { const t = v ? new Date(v).getTime() : NaN; return Number.isNaN(t) ? null : t; };
-const eventTime = (e) => toMs(e?.created_at ?? e?.at ?? e?.timestamp ?? e?.time);
+export const eventKind = (e) => String(e?.kind ?? e?.type ?? e?.event ?? e?.status ?? 'event');
+export const eventWhen = (e) => e?.occurred_at ?? e?.created_at ?? e?.at ?? e?.timestamp ?? e?.time;
+const eventTime = (e) => toMs(eventWhen(e));
 
 /**
  * Seconds from request to now (while waiting) or to the last recorded event (when finished).
  * Returns null when the ACP gave no usable timestamps: we never guess a duration.
  */
 export function durationSeconds(task, events, inProgress, now = Date.now()) {
+  const finished = toMs(task?.finished_at);
   const times = (Array.isArray(events) ? events : []).map(eventTime).filter((t) => t != null);
   const start = toMs(createdAt(task)) ?? (times.length ? Math.min(...times) : null);
   if (start == null) return null;
-  const end = inProgress ? now : (times.length ? Math.max(...times) : null);
+  const end = inProgress ? now : (finished ?? (times.length ? Math.max(...times) : null));
   if (end == null || end < start) return null;
   return Math.round((end - start) / 1000);
 }
@@ -101,7 +105,10 @@ export function outcome(task, run, opts = {}) {
   if (text.includes('worker_interrupted'))
     return { kind: 'interrupted', tone: 'bad', label: 'Interrupted, please request again',
       detail: 'The worker stopped before finishing. Request the diagnostic again.' };
-  if (/model|explanation/.test(text) && /fail|error|unavailable|timeout/.test(text))
+  if (/prometheus/.test(text))
+    return { kind: 'evidence_failed', tone: 'bad', label: 'Evidence collection failed',
+      detail: 'Prometheus could not be queried or returned something unusable. Nothing could be checked. This is NOT a healthy result.' };
+  if (/hermes|model|explanation/.test(text) && /fail|error|unavailable|timeout|invalid/.test(text))
     return { kind: 'explanation_failed', tone: 'bad', label: 'Explanation failed',
       detail: 'The model could not produce an explanation. The evidence below was collected before the model call.' };
   if (['queued', 'pending', 'accepted'].includes(status))

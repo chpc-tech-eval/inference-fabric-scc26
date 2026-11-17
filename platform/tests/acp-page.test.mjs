@@ -109,3 +109,24 @@ test('fmtDuration', () => {
   assert.equal(fmtDuration(NaN), '—');
   assert.equal(fmtDuration(-1), '—');
 });
+
+import { eventKind, eventWhen } from '../src/lib/acp-view.js';
+
+test('real ACP shape: flat task, summary, failure_code, events with kind/occurred_at', () => {
+  const raw = { task_id: U, status: 'failed', failure_code: 'diagnostic_no_data', created_at: '2026-11-09T07:55:58Z',
+    finished_at: '2026-11-09T07:56:10Z', evidence: null, summary: null,
+    events: [{ id: 1, kind: 'queued', occurred_at: '2026-11-09T07:55:58Z', data: {} }, { id: 2, kind: 'failed', occurred_at: '2026-11-09T07:56:10Z', data: { code: 'diagnostic_no_data' } }] };
+  const d = normalizeDetail(raw);
+  assert.equal(outcome(d.task, d.run).kind, 'no_data');
+  assert.equal(eventKind(d.events[0]), 'queued');
+  assert.equal(eventWhen(d.events[1]), '2026-11-09T07:56:10Z');
+  assert.equal(durationSeconds(d.task, d.events, false), 12);
+  assert.equal(explanationText(normalizeDetail({ ...raw, summary: 'ok text' }).explanation), 'ok text');
+});
+
+test('worker and prometheus failure codes are never healthy', () => {
+  assert.equal(outcome({ status: 'failed', failure_code: 'hermes_timeout' }).label, 'Explanation failed');
+  assert.equal(outcome({ status: 'failed', failure_code: 'hermes_failed' }).label, 'Explanation failed');
+  assert.equal(outcome({ status: 'failed', failure_code: 'prometheus_unavailable' }).label, 'Evidence collection failed');
+  assert.equal(outcome({ status: 'failed', failure_code: 'worker_error' }).tone, 'bad');
+});

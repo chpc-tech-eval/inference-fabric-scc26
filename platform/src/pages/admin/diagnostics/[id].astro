@@ -1,7 +1,7 @@
 ---
 import { currentUser } from '../../../lib/auth.js';
 import { getAcp } from '../../../lib/acp-service.js';
-import { errorCode, explanationText, fmtTime, fmtDuration, durationSeconds, isUuid, messageForCode, normalizeDetail, outcome, createdAt } from '../../../lib/acp-view.js';
+import { errorCode, eventKind, eventWhen, explanationText, fmtTime, fmtDuration, durationSeconds, isUuid, messageForCode, normalizeDetail, outcome, createdAt } from '../../../lib/acp-view.js';
 
 Astro.response.headers.set('Cache-Control', 'no-store');
 
@@ -74,8 +74,8 @@ pre{background:#f4f4f4;padding:.6rem;overflow:auto}
 <ol>
 {d.events.map((e) => (
 <li>
-  <strong>{String(e?.type ?? e?.event ?? e?.status ?? 'event')}</strong>
-  <small> {fmtTime(e?.created_at ?? e?.at ?? e?.timestamp ?? e?.time)}</small>
+  <strong>{eventKind(e)}</strong>
+  <small> {fmtTime(eventWhen(e))}</small>
 </li>
 ))}
 </ol>
