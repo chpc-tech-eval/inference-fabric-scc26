@@ -1,0 +1,44 @@
+# Week 4 run manifest (Frontend). Same format as evidence/week3/run-manifest.yaml.
+# Values come from the real end-to-end run. No tokens, passwords or keys are recorded.
+schema_version: '1.0'
+run_id: 20261117T190004Z
+project: inference-fabric-scc26
+started_at: '2026-11-17T19:00:04Z'    # task queued (staff pressed "Request diagnostic")
+finished_at: '2026-11-17T19:00:18Z'   # task reached "succeeded"
+source:
+  repository: https://github.com/chpc-tech-eval/inference-fabric-scc26
+  commit: 3e7194947406c630bd4d42ecc1eb3f880ca70850
+  dirty: false          # `git status --porcelain` must print nothing
+software:
+  images:
+    student_platform: sha256:f69d7ec54ac96bb16ebf25b63ce4492aa77f8ede7d41c11914f2d43b3b8f02ed   # image that submitted the request
+    acp_api: sha256:750b0ceb03fc3d09ef71063b5424716f14944df7be082485689dba6f2ff68f1c
+    hermes: sha256:187720bd32aa05c2400af94eaf80ecb388612d80c7003c80b84c415d6b5a9bd6   # team image (see notes)
+    llama_cpp_server: sha256:e3032ea0712da96dec820c770626385de4322dd06619fb5829256a504bbc9375
+  other:
+    hermes_base_instructor: sha256:6ec37a755e57ef868a2fcce6052535588d14742bc85df75ab973dae811f1bdda
+    acp_postgres: sha256:aae6554de426ae1990f1a939ff183a0299146cf7142a6f4c379c3357af9cc2d8
+    student_platform_display: sha256:6eb0f44e8ccd3640f2ca6aea1662a4793870c1c692592c5512cac9e45205d7e8   # image deployed afterwards (sha-9e2a80e) that shows the explanation and events correctly
+  notes:
+    - "Hermes runs a team image built FROM the instructor's pinned digest plus a checked patch (images/acp-hermes/patch_acp.py). It turns lazy installs off and sets ACP_HERMES_MIN_CONTEXT=4096, which lowers Hermes' 64K tool-use floor for the tool-less admin run. The model's real context (4096 per slot) is not changed."
+    - "The platform image that submitted the request (f69d7ec5...) could not display the ACP summary field. Image sha-9e2a80e (6eb0f44e...) fixes that, and the stored task was re-opened with the new page."
+model:
+  name: qwen2.5-1.5b-instruct
+  file: qwen2.5-1.5b-instruct-q4_k_m.gguf
+  sha256: 6a1a2eb6d15622bf3c96857206351ba97e1af16c30d7a74ee38970e434e9407e   # from Cloud automation
+  hardware: cpu (k8s-worker-01, 6 CPU / 6Gi, 6 threads, 4 slots x 4096 context)
+execution:
+  task_id: 5ceee7e7-b2ba-4383-b9e8-270c8f468423
+  status: succeeded
+  explanation_seconds: 14   # 19:00:04 (queued) -> 19:00:18 (succeeded); evidence collected in under 1 s
+  evidence_check: "matches Prometheus at the evidence timestamp 1794942004.946 (true=1, false=0, unknown=0)"
+  earlier_runs:
+    - task_id: e16061f4-8d6a-4792-a5eb-a94bacec60f9
+      status: failed
+      failure_code: diagnostic_no_data    # nothing in quantum-platform yet (shown as "No metrics found")
+    - task_id: 37b7991c-d947-4254-83bc-55709dc9238d
+      status: failed
+      failure_code: hermes_timeout        # Hermes tried `pip install boto3` with egress closed
+    - task_id: aa3179a7-3dda-4953-ac82-8b1ec95920d0
+      status: failed
+      failure_code: hermes_timeout        # same cause, after the pod-level env change that did not reach the subprocess
