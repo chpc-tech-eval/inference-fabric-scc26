@@ -21,7 +21,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: platform
-          image: ghcr.io/chpc-tech-eval/inference-fabric-scc26/student-platform:sha-99b889b5cb1b6eb5e4808bbe0f50238b7e3d031e
+          image: ghcr.io/chpc-tech-eval/inference-fabric-scc26/student-platform:sha-9e2a80ed5bbe57418e10b9a8bc305512ca5ec519
           ports:
             - containerPort: 4321
           env:
