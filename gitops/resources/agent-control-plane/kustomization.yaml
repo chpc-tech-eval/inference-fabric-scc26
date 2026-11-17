@@ -14,4 +14,5 @@ resources:
   - acp-db-app-sealed.yaml
   - acp-verification-sealed.yaml
   - acp-model-sealed.yaml
+  - ghcr-secret-sealed.yaml
   - networkpolicy.yaml

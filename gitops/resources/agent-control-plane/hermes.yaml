@@ -17,11 +17,13 @@ spec:
         app: acp-hermes
     spec:
       automountServiceAccountToken: false
+      imagePullSecrets:
+        - name: ghcr-secret
       securityContext:
         fsGroup: 1000
       containers:
         - name: hermes-worker
-          image: ghcr.io/nyameko/agent-control-plane-hermes@sha256:6ec37a755e57ef868a2fcce6052535588d14742bc85df75ab973dae811f1bdda  # instructor-pinned, approved by Val
+          image: ghcr.io/chpc-tech-eval/inference-fabric-scc26/acp-hermes@sha256:187720bd32aa05c2400af94eaf80ecb388612d80c7003c80b84c415d6b5a9bd6  # team image: instructor base + images/acp-hermes/patch_acp.py
           env:
             - name: HERMES_HOME
               value: /var/lib/hermes/admin-readonly
@@ -38,6 +40,8 @@ spec:
               value: "http://prometheus-server.monitoring.svc.cluster.local:80"
             - name: ACP_RUN_TIMEOUT_SECONDS
               value: "300"  # CPU model answers take tens of seconds
+            - name: ACP_HERMES_MIN_CONTEXT
+              value: "4096"  # same as llm-cpu context per request
             - name: HERMES_DISABLE_LAZY_INSTALLS
               value: "1"  # sealed image: fail fast instead of pip-installing at runtime (egress is denied)
             - name: ACP_TENANT_ID
