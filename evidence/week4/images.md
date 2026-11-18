@@ -10,10 +10,10 @@ Digests below are what the cluster is actually running (`kubectl get pods ... im
 | --- | --- | --- | --- |
 | ACP API | `ghcr.io/nyameko/agent-control-plane` | `sha256:750b0ceb03fc3d09ef71063b5424716f14944df7be082485689dba6f2ff68f1c` | yes (digest) |
 | ACP migration job | same image as the API | `sha256:750b0ceb03fc3d09ef71063b5424716f14944df7be082485689dba6f2ff68f1c` | yes (digest) |
-| Hermes worker | `ghcr.io/nyameko/agent-control-plane-hermes` | `sha256:6ec37a755e57ef868a2fcce6052535588d14742bc85df75ab973dae811f1bdda` | yes (digest) |
+| Hermes worker(team image) | `ghcr.io/chpc-tech-eval/inference-fabric-scc26/acp-hermes` | `sha256:187720bd32aa05c2400af94eaf80ecb388612d80c7003c80b84c415d6b5a9bd6` | yes (digest) |
 | ACP PostgreSQL | `postgres:15-alpine` | `sha256:aae6554de426ae1990f1a939ff183a0299146cf7142a6f4c379c3357af9cc2d8` | **no** (floating tag) |
 
-Approval: TODO (record who at the instructor's end confirmed these two digests, and when).
+Team image: the instructor's approved Hermes image (`ghcr.io/nyameko/agent-control-plane-hermes@sha256:6ec37a755e57ef868a2fcce6052535588d14742bc85df75ab973dae811f1bdda`) plus `images/acp-hermes/patch_acp.py` (sha256 `a0154e904c985f86f1bffbedb721100b80c1ed92686ea827a322056c3edda3e1`), built by the `acp-hermes-image` workflow. The patch (1) sets `security.allow_lazy_installs: false` in the worker's seeded Hermes config, (2) forwards `HERMES_DISABLE_LAZY_INSTALLS=1` and `ACP_HERMES_MIN_CONTEXT` to the Hermes subprocess, and (3) when `ACP_HERMES_MIN_CONTEXT` is set (2048-64000), lowers Hermes's 64,000-token context minimum to that value. It is set to 4096, the context each request gets (llama-server `--ctx-size 16384`, `--parallel 4`; `/props` reports `n_ctx = 4096`). The model's trained context is about 32K. Runs on this image therefore use a lowered Hermes context floor and are not comparable to the instructor's intended configuration.
 
 Version	Checksum
 1	f12108f32e6e525e630ea328a93ef7a1c0a370a3ac44bb0147c7f66e0af0ab57
