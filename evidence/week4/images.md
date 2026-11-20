@@ -10,10 +10,17 @@ Digests below are what the cluster is actually running (`kubectl get pods ... im
 | --- | --- | --- | --- |
 | ACP API | `ghcr.io/nyameko/agent-control-plane` | `sha256:750b0ceb03fc3d09ef71063b5424716f14944df7be082485689dba6f2ff68f1c` | yes (digest) |
 | ACP migration job | same image as the API | `sha256:750b0ceb03fc3d09ef71063b5424716f14944df7be082485689dba6f2ff68f1c` | yes (digest) |
-| Hermes worker(team image) | `ghcr.io/chpc-tech-eval/inference-fabric-scc26/acp-hermes` | `sha256:187720bd32aa05c2400af94eaf80ecb388612d80c7003c80b84c415d6b5a9bd6` | yes (digest) |
+| Hermes worker (team image) | `ghcr.io/chpc-tech-eval/inference-fabric-scc26/acp-hermes` | `sha256:187720bd32aa05c2400af94eaf80ecb388612d80c7003c80b84c415d6b5a9bd6` | yes (digest) |
 | ACP PostgreSQL | `postgres:15-alpine` | `sha256:aae6554de426ae1990f1a939ff183a0299146cf7142a6f4c379c3357af9cc2d8` | **no** (floating tag) |
 
-Team image: the instructor's approved Hermes image (`ghcr.io/nyameko/agent-control-plane-hermes@sha256:6ec37a755e57ef868a2fcce6052535588d14742bc85df75ab973dae811f1bdda`) plus `images/acp-hermes/patch_acp.py` (sha256 `a0154e904c985f86f1bffbedb721100b80c1ed92686ea827a322056c3edda3e1`), built by the `acp-hermes-image` workflow. The patch (1) sets `security.allow_lazy_installs: false` in the worker's seeded Hermes config, (2) forwards `HERMES_DISABLE_LAZY_INSTALLS=1` and `ACP_HERMES_MIN_CONTEXT` to the Hermes subprocess, and (3) when `ACP_HERMES_MIN_CONTEXT` is set (2048-64000), lowers Hermes's 64,000-token context minimum to that value. It is set to 4096, the context each request gets (llama-server `--ctx-size 16384`, `--parallel 4`; `/props` reports `n_ctx = 4096`). The model's trained context is about 32K. Runs on this image therefore use a lowered Hermes context floor and are not comparable to the instructor's intended configuration.
+### Hermes worker: team image (instructor base + small patch)
+
+- **Base:** the instructor's approved Hermes image, `ghcr.io/nyameko/agent-control-plane-hermes@sha256:6ec37a755e57ef868a2fcce6052535588d14742bc85df75ab973dae811f1bdda`, unchanged and pinned by digest in `images/acp-hermes/Dockerfile`.
+- **Patch:** `images/acp-hermes/patch_acp.py` (sha256 `a0154e904c985f86f1bffbedb721100b80c1ed92686ea827a322056c3edda3e1`), applied at build time by the `acp-hermes-image` workflow. The build fails if the text it replaces does not match exactly once.
+- **What it changes:** (1) sets `security.allow_lazy_installs: false` in the worker's seeded Hermes config; (2) forwards `HERMES_DISABLE_LAZY_INSTALLS=1` and `ACP_HERMES_MIN_CONTEXT` to the Hermes subprocess; (3) when `ACP_HERMES_MIN_CONTEXT` is set (allowed range 2048-64000), lowers Hermes's 64,000-token context minimum to that value.
+- **Runtime settings:** `HERMES_DISABLE_LAZY_INSTALLS=1`, `ACP_HERMES_MIN_CONTEXT=4096`; the container runs as uid 10001 (non-root).
+- **Model server:** `llama-server --ctx-size 16384 --parallel 4`, so each request gets 4,096 tokens (`/props` reports `n_ctx = 4096`). The floor is set to that value, not above it.
+- **Why a team image:** the approved Hermes image could not complete a run on our CPU model for two reasons: at startup it tried to `pip install boto3`, which our default-deny egress policy blocks (the run hung until the 300 s timeout), and its 64,000-token context minimum is above what Qwen2.5-1.5B supports (about 32K trained, 4,096 per request as served). Rather than open egress to PyPI or misreport the model's context window, we kept the instructor's image and added a small, reviewed, build-time patch with a documented floor equal to the context actually served. Runs on this image are therefore not comparable to the instructor's intended setup.
 
 Version	Checksum
 1	f12108f32e6e525e630ea328a93ef7a1c0a370a3ac44bb0147c7f66e0af0ab57
@@ -45,7 +52,6 @@ Migration job acp-db-migration: Complete (1/1, 8 s), run 5 days 21 hours before 
 | Image | `ghcr.io/chpc-tech-eval/inference-fabric-scc26/student-platform` |
 | Tag in manifest | `sha-99b889b5cb1b6eb5e4808bbe0f50238b7e3d031e` |
 | Running digest | `sha256:f69d7ec54ac96bb16ebf25b63ce4492aa77f8ede7d41c11914f2d43b3b8f02ed` |
-| Cross-check | TODO (confirm this digest against the Actions run summary for that commit) |
 | PostgreSQL | `postgres:15-alpine`, running `sha256:54e0dd8e8cddcdbb9156c2486eed5a43eccb7214d7c6828097d41ce049fb3984` |
 
 The package is private; the cluster pulls it with a pull secret.
@@ -55,3 +61,4 @@ The package is private; the cluster pulls it with a pull secret.
 - `postgres:15-alpine` is an unpinned tag in two manifests, and the two databases are running **different** digests of it (`aae6554d...` for the ACP, `54e0dd8e...` for the platform), because they pulled at different times. Recommend pinning both by digest.
 - The download init container uses a version tag rather than a digest.
 - The platform image changed since Week 3 (the Week 3 digest was `d2bd815c...`); this is the Week 4 deployment.
+- The approved diagnostic reads the namespace quantum-platform, which is hardcoded in diagnostic.py (query and evidence record). Our website runs in student-platform. To let the pipeline run end to end, a stand-in namespace quantum-platform with a single pause Deployment (diagnostic-target) was added through Git. The diagnostic therefore reports on that stand-in, not on the Student Platform. A diagnostic targeting student-platform needs an updated approved image.
