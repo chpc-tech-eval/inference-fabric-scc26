@@ -13,6 +13,8 @@ spec:
         app: bench-harness
     spec:
       restartPolicy: Never
+      imagePullSecrets:
+        - name: ghcr-pull
       # TODO: set once Infrastructure confirms which node runs the harness.
       # k8s-worker-01 holds the 6-CPU inference server; k8s-worker-02 carries
       # 4.2 CPU of other limits (see evidence/week4/capacity.md).
@@ -20,7 +22,7 @@ spec:
       #   kubernetes.io/hostname: <NODE>
       containers:
         - name: harness
-          image: "REPLACE-WITH-HARNESS-IMAGE@sha256:REPLACE-WITH-DIGEST"   # from CI/CD
+          image: "ghcr.io/chpc-tech-eval/inference-fabric-scc26/bench-harness@sha256:8f6ac68b84abff7a2035b73e1b6f765bae6ff81b18a016c6e355360d52ec3c4a"   # from CI/CD
           env:
             - name: RUN_ID
               value: "REPLACE-run-001"
