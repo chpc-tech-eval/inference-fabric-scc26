@@ -1,6 +1,7 @@
 # Benchmark harness image. Standard library only: no pip install, no internet needed at build or run time.
 # CI/CD: please pin the base image by digest when you wire this into the workflow.
 FROM python:3.13-slim-bookworm
+LABEL org.opencontainers.image.source="https://github.com/chpc-tech-eval/inference-fabric-scc26"
 ENV PYTHONDONTWRITEBYTECODE=1
 RUN groupadd --gid 10001 bench && useradd --uid 10001 --gid 10001 --create-home bench
 WORKDIR /app
