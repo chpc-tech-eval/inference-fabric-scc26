@@ -26,6 +26,7 @@ class Fake(ThreadingHTTPServer):
         self.active = self.max_active = 0
         self.lock = threading.Lock()
         self.seen_keys = []
+        self.seen_prompts = []
 
     @property
     def url(self):
@@ -56,7 +57,8 @@ class Handler(BaseHTTPRequestHandler):
         if srv.require_key and self.headers.get("Authorization") != f"Bearer {srv.require_key}":
             return self._send(401, '{"error":{"message":"Invalid API Key"}}')
         text = req["messages"][0]["content"]
-        if text.startswith("Summarise what a load balancer"):   # exactly one prompt in the set fails
+        srv.seen_prompts.append(text)
+        if "Summarise what a load balancer" in text:   # exactly one prompt in the set fails
             return self._send(500, '{"error":"boom"}')
         assert req["stream"] is True and req["temperature"] == 0 and req["max_tokens"] == 256
         with srv.lock:
@@ -190,6 +192,30 @@ class HarnessTests(unittest.TestCase):
         self.assertNotIn(KEY, text)
         self.assertTrue(summary["config"]["api_key_used"])
         self.assertIn(f"Bearer {KEY}", srv.seen_keys)
+
+    def test_cache_bust_makes_every_request_start_differently_in_every_run(self):
+        srv = self.serve()
+        _, _, summary, _ = self.run_harness(srv, RUN_ID="run-a")
+        first = list(srv.seen_prompts)
+        self.assertTrue(summary["config"]["cache_bust"])
+        self.assertEqual(len({t[:60] for t in first}), 20)           # no two requests share a start
+        srv.seen_prompts.clear()
+        self.run_harness(srv, RUN_ID="run-b")
+        self.assertFalse({t[:60] for t in first} & {t[:60] for t in srv.seen_prompts})   # nor across runs
+        originals = {x["prompt"] for x in harness.load_prompts(PROMPTS)}
+        for t in first:
+            self.assertIn(t.split("] ", 1)[1], originals)             # only a tag was added
+
+    def test_cache_bust_off_sends_the_prompt_unchanged(self):
+        srv = self.serve()
+        _, _, summary, _ = self.run_harness(srv, CACHE_BUST="0")
+        self.assertFalse(summary["config"]["cache_bust"])
+        self.assertEqual(srv.seen_prompts, [x["prompt"] for x in harness.load_prompts(PROMPTS)])
+
+    def test_bad_cache_bust_value_exits_2(self):
+        srv = self.serve()
+        code, _, _, _ = self.run_harness(srv, CACHE_BUST="maybe")
+        self.assertEqual(code, 2)
 
     def test_server_settings_are_recorded_when_given(self):
         srv = self.serve()
