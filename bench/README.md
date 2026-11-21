@@ -18,6 +18,7 @@ time to first token, total time and tokens per second for every request. Standar
 | `REQUEST_TIMEOUT` | seconds per request | `300` |
 | `PROMPTS_FILE` | JSON Lines prompt file | `prompts.jsonl` next to the script (`/app/prompts.jsonl` in the image) |
 | `RESULTS_DIR` | where results go: `RESULTS_DIR/RUN_ID/` | `/results` |
+| `PARALLEL` / `CTX` | the server's slot count and context size. Only written into `summary.json`, so each result says which server setup it came from | not recorded |
 | `DRY_RUN=1` | check the prompt file only: no network, no files | off |
 
 ## Outputs
@@ -53,3 +54,7 @@ DRY_RUN=1 PROMPTS_FILE=bench/prompts.jsonl python bench/harness.py
 ```
 
 `bench/prompts.jsonl` is fixed: 7 short, 7 medium, 6 long. Never edit it after the first run; make `prompts.v2.jsonl` instead.
+
+Every prompt must be different from the start: llama.cpp keeps the processed start of earlier prompts and skips that work
+when it sees the same text again, which makes a repeated prompt look about 40 times faster to first token (seen once in a
+check run, before the prompt set was fixed). `test_prompts_are_unique_…` guards this.

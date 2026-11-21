@@ -133,6 +133,9 @@ def load_config(env):
         raise ConfigError("PHASE must be 'cold' or 'warm'")
     cfg["api_key"] = env.get("API_KEY", "").strip()
     cfg["results_dir"] = env.get("RESULTS_DIR", "").strip() or "/results"
+    # Server settings are only written down, never used: they say which server setup a result belongs to.
+    cfg["server_parallel"] = env.get("PARALLEL", "").strip()
+    cfg["server_ctx"] = env.get("CTX", "").strip()
     return cfg
 
 
@@ -268,7 +271,9 @@ def summarise(cfg, rows, wall_s, started_at, finished_at, prompts_sha):
         "config": {"target_url": cfg["target_url"], "model": cfg["model"],
                    "concurrency": cfg["concurrency"], "max_tokens": cfg["max_tokens"],
                    "temperature": cfg["temperature"], "max_prompts": cfg["max_prompts"],
-                   "request_timeout_s": cfg["timeout"], "api_key_used": bool(cfg["api_key"])},
+                   "request_timeout_s": cfg["timeout"], "api_key_used": bool(cfg["api_key"]),
+                   "server_parallel": cfg["server_parallel"] or None,
+                   "server_ctx": cfg["server_ctx"] or None},
         "prompts_sha256": prompts_sha,
         "requests": len(rows),
         "ok": len(ok),
@@ -363,7 +368,7 @@ def main(env=None):
     summary = summarise(cfg, rows, wall, started_at, finished_at, prompts_sha)
     write_atomic(out_dir / "summary.json", json.dumps(summary, indent=2) + "\n")
     print(f"done: {summary['ok']}/{summary['requests']} ok in {summary['wall_s']} s; "
-          f"failures {summary['by_status']}; results in {out_dir}", flush=True)
+          f"status counts {summary['by_status']}; results in {out_dir}", flush=True)
     return 0 if summary["ok"] else 1
 
 
