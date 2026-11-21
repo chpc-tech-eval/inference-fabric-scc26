@@ -1,0 +1,54 @@
+# Week 5: let the benchmark harness (Job pods in namespace bench) reach the two
+# inference servers, and nothing else new. The existing default-deny-ingress in
+# namespace "inference" keeps everything else out.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: llm-cpu-from-bench
+  namespace: inference
+  annotations:
+    argocd.argoproj.io/sync-wave: '-3'
+spec:
+  podSelector:
+    matchLabels:
+      app: llm-cpu
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: bench
+      podSelector:
+        matchLabels:
+          app: bench-harness
+    ports:
+    - protocol: TCP
+      port: 8080
+---
+# Ollama has no API key of its own: this policy is its only protection, so it is
+# limited to the harness pods by label, not to the whole bench namespace.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ollama-cpu-from-bench
+  namespace: inference
+  annotations:
+    argocd.argoproj.io/sync-wave: '-3'
+spec:
+  podSelector:
+    matchLabels:
+      app: ollama-cpu          # VERIFY against Cloud automation's Ollama pod label
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: bench
+      podSelector:
+        matchLabels:
+          app: bench-harness
+    ports:
+    - protocol: TCP
+      port: 11434
