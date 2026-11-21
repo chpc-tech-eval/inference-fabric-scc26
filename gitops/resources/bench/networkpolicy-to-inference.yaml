@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: llm-servers-from-bench
+  namespace: inference
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values: [llm-cpu, ollama-cpu]
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: bench
+          podSelector:
+            matchLabels:
+              app: bench-harness
+      ports:
+        - { port: 8080, protocol: TCP }
+        - { port: 11434, protocol: TCP }
