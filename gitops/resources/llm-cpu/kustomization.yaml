@@ -9,3 +9,4 @@ resources:
   - service.yaml
   - deployment.yaml
   - networkpolicy.yaml
+  - bench-networkpolicy.yaml
