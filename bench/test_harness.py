@@ -123,6 +123,19 @@ class HarnessTests(unittest.TestCase):
         for x in p:
             self.assertLess(len(x["prompt"].split()) * 2.5, 4096 - 256)
 
+    def test_prompts_are_unique_so_the_server_cache_cannot_flatter_a_run(self):
+        # llama.cpp reuses the cached start of a prompt it has seen: a repeated prompt skips its prefill
+        p = harness.load_prompts(PROMPTS)
+        self.assertEqual(len({x["prompt"] for x in p}), len(p), "two prompts are identical")
+        for i, a in enumerate(p):
+            for b in p[i + 1:]:
+                common = 0
+                for x, y in zip(a["prompt"], b["prompt"]):
+                    if x != y:
+                        break
+                    common += 1
+                self.assertLess(common, 300, f"{a['id']} and {b['id']} start with the same text")
+
     def test_one_request_per_prompt_with_timings(self):
         srv = self.serve()
         code, rows, summary, _ = self.run_harness(srv, KEY_UNUSED="x")
@@ -177,6 +190,14 @@ class HarnessTests(unittest.TestCase):
         self.assertNotIn(KEY, text)
         self.assertTrue(summary["config"]["api_key_used"])
         self.assertIn(f"Bearer {KEY}", srv.seen_keys)
+
+    def test_server_settings_are_recorded_when_given(self):
+        srv = self.serve()
+        _, _, summary, _ = self.run_harness(srv, MAX_PROMPTS="1", PARALLEL="4", CTX="4096")
+        self.assertEqual(summary["config"]["server_parallel"], "4")
+        self.assertEqual(summary["config"]["server_ctx"], "4096")
+        _, _, summary2, _ = self.run_harness(srv, MAX_PROMPTS="1")
+        self.assertIsNone(summary2["config"]["server_parallel"])
 
     def test_wrong_key_records_401_and_exit_1(self):
         srv = self.serve(require_key=KEY)
