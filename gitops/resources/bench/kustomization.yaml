@@ -4,3 +4,5 @@ resources:
   - namespace.yaml
   - results-pvc.yaml
   - ghcr-pull-sealed.yaml
+  - bench-llm-key-sealed.yaml
+  - networkpolicy-to-inference.yaml

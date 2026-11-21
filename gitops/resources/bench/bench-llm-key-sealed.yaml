@@ -1,0 +1,15 @@
+---
+apiVersion: bitnami.com/v1alpha1
+kind: SealedSecret
+metadata:
+  creationTimestamp: null
+  name: bench-llm-key
+  namespace: bench
+spec:
+  encryptedData:
+    api-key: AgATx6VGGrSUuni/65uPSSlGQwDi+wUZSYf66tRKnUdWS0vDkPqlGD1y4i6oME/YJQzAtRA8Ye9oNpIuSKbizwNOI/mlUvVv+iPVF7B1sWoTKaoROh8a2mz1YAFxSh4yzy48o/6gD4MYARgfNgqCVI9Ff/IRdK1LxSEFfXHZ4BFsVfQoNw1SjA3tJA584+Jv2e6cvamK0QqApTEPVQXPVglQG9BEfd/OS53O+KkH0UiWNZLLF/jnLDtc3upCS7tmSdtH+HWlNb677/hMzYK40DH7WZ8R5aGrivTjant7AOuvXBew4bIMaRjJhfWNu3Mbxy5DPAWKYOvAQdoncetVWmzeGADa4whziFfX19Kp/DHDS1x59ggbmq0vPR9eZXT3eseQkIw94fc4TE3B68XS3evsp8tlvpRmKTezg65z+L9Qj1l68CRBf/endbRaORKpaja1SOZY0fbBKDmzIpFzc3hujOHMnTfJFI0z86r6vuehFNIIxJAsbD0j178d4IU+sreVey6UOEL0CaRmWdiimQ2DJoui0Z7ty5O7nZXoIVfWb81meSFhvEYN0JaLycx7AsfyzumW1jbaQNpGap6CetbOs9lqIK26QOHXOe6poFkTkJzA6u6cTKV9WaJWDQ18OZJMjmDHZxo2LJJXne5cexdgpo05xPY99UncJqSPOJWYKQIVwD9cuLQBtD19hP/V2s2fQFQv7adndowfI804NK3NyKVQ1k62yADVtlEHPCEiaLm4HiKBh6x6mcoXM/AGavk=
+  template:
+    metadata:
+      creationTimestamp: null
+      name: bench-llm-key
+      namespace: bench
