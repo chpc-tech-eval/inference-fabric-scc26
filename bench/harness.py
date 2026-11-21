@@ -134,9 +134,22 @@ def load_config(env):
     cfg["api_key"] = env.get("API_KEY", "").strip()
     cfg["results_dir"] = env.get("RESULTS_DIR", "").strip() or "/results"
     # Server settings are only written down, never used: they say which server setup a result belongs to.
+    cb = env.get("CACHE_BUST", "").strip() or "1"
+    if cb not in ("0", "1"):
+        raise ConfigError("CACHE_BUST must be 0 or 1")
+    cfg["cache_bust"] = cb == "1"
     cfg["server_parallel"] = env.get("PARALLEL", "").strip()
     cfg["server_ctx"] = env.get("CTX", "").strip()
     return cfg
+
+
+def prompt_text(cfg, item):
+    """The text sent for one prompt. With CACHE_BUST=1 (default) a short tag that differs per run and per prompt
+    is put in front, so a server cannot reuse the cached start of a prompt it saw in an earlier run."""
+    if not cfg["cache_bust"]:
+        return item["prompt"]
+    tag = hashlib.sha256(f"{cfg['run_id']}/{item['id']}".encode()).hexdigest()[:8]
+    return f"[ref {tag}] {item['prompt']}"
 
 
 def _clean(text, limit=200):
@@ -153,7 +166,7 @@ def one_request(cfg, item, worker):
     path = u.path.rstrip("/") + "/chat/completions"
     body = json.dumps({
         "model": cfg["model"],
-        "messages": [{"role": "user", "content": item["prompt"]}],
+        "messages": [{"role": "user", "content": prompt_text(cfg, item)}],
         "stream": True,
         "stream_options": {"include_usage": True},
         "temperature": cfg["temperature"],
@@ -272,6 +285,7 @@ def summarise(cfg, rows, wall_s, started_at, finished_at, prompts_sha):
                    "concurrency": cfg["concurrency"], "max_tokens": cfg["max_tokens"],
                    "temperature": cfg["temperature"], "max_prompts": cfg["max_prompts"],
                    "request_timeout_s": cfg["timeout"], "api_key_used": bool(cfg["api_key"]),
+                   "cache_bust": cfg["cache_bust"],
                    "server_parallel": cfg["server_parallel"] or None,
                    "server_ctx": cfg["server_ctx"] or None},
         "prompts_sha256": prompts_sha,

@@ -18,6 +18,7 @@ time to first token, total time and tokens per second for every request. Standar
 | `REQUEST_TIMEOUT` | seconds per request | `300` |
 | `PROMPTS_FILE` | JSON Lines prompt file | `prompts.jsonl` next to the script (`/app/prompts.jsonl` in the image) |
 | `RESULTS_DIR` | where results go: `RESULTS_DIR/RUN_ID/` | `/results` |
+| `CACHE_BUST` | `1` puts a short tag (`[ref 1a2b3c4d] `, different for every run and every prompt) in front of each prompt, so the server cannot skip the prefill of a prompt it processed in an earlier run. `0` sends the prompt exactly as written | `1` |
 | `PARALLEL` / `CTX` | the server's slot count and context size. Only written into `summary.json`, so each result says which server setup it came from | not recorded |
 | `DRY_RUN=1` | check the prompt file only: no network, no files | off |
 
@@ -54,6 +55,11 @@ DRY_RUN=1 PROMPTS_FILE=bench/prompts.jsonl python bench/harness.py
 ```
 
 `bench/prompts.jsonl` is fixed: 7 short, 7 medium, 6 long. Never edit it after the first run; make `prompts.v2.jsonl` instead.
+
+Repeated runs against the same server: llama.cpp keeps processed prompts and skips their prefill when the same text
+comes again (a second warm run showed first-token times near 0.06 s instead of 1.4 to 3.3 s for every medium and long
+prompt). `CACHE_BUST=1` (the default) prevents this by tagging each request, which adds about 5 to 8 prompt tokens.
+The tag is recorded as `cache_bust` in `summary.json`; compare only runs with the same setting.
 
 Every prompt must be different from the start: llama.cpp keeps the processed start of earlier prompts and skips that work
 when it sees the same text again, which makes a repeated prompt look about 40 times faster to first token (seen once in a
