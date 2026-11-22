@@ -1,0 +1,138 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dashboard-bench
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  bench.json: |
+    {
+      "title": "Benchmark",
+      "uid": "bench",
+      "timezone": "utc",
+      "refresh": "10s",
+      "schemaVersion": 39,
+      "version": 1,
+      "time": { "from": "now-30m", "to": "now" },
+      "tags": ["week5", "benchmark"],
+      "templating": {
+        "list": [
+          {
+            "name": "container", "label": "Server container", "type": "custom", "hide": 0,
+            "query": "llama-server,ollama",
+            "current": { "selected": true, "text": "llama-server", "value": "llama-server" },
+            "options": [
+              { "selected": true, "text": "llama-server", "value": "llama-server" },
+              { "selected": false, "text": "ollama", "value": "ollama" }
+            ]
+          }
+        ]
+      },
+      "panels": [
+        {
+          "id": 1, "type": "stat", "title": "Server pods running",
+          "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [ { "refId": "A", "expr": "count(kube_pod_container_status_running{namespace=\"inference\",container=\"$container\"} == 1) or vector(0)", "instant": true } ],
+          "fieldConfig": { "defaults": { "thresholds": { "mode": "absolute", "steps": [ { "color": "red", "value": null }, { "color": "green", "value": 1 } ] } }, "overrides": [] }
+        },
+        {
+          "id": 2, "type": "stat", "title": "Requests processing (llama.cpp only)",
+          "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [ { "refId": "A", "expr": "llamacpp:requests_processing", "instant": true } ],
+          "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] }
+        },
+        {
+          "id": 3, "type": "stat", "title": "Requests deferred (llama.cpp only)",
+          "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [ { "refId": "A", "expr": "llamacpp:requests_deferred", "instant": true } ],
+          "fieldConfig": { "defaults": { "unit": "short", "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "orange", "value": 1 } ] } }, "overrides": [] }
+        },
+        {
+          "id": 4, "type": "stat", "title": "Generation speed (llama.cpp only, tokens/s)",
+          "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [ { "refId": "A", "expr": "llamacpp:predicted_tokens_seconds", "instant": true } ],
+          "fieldConfig": { "defaults": { "unit": "short", "decimals": 1 }, "overrides": [] }
+        },
+        {
+          "id": 5, "type": "timeseries", "title": "Server CPU used (cores) vs limit",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            { "refId": "A", "legendFormat": "used", "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"inference\",container=\"$container\"}[2m]))" },
+            { "refId": "B", "legendFormat": "limit", "expr": "sum(kube_pod_container_resource_limits{namespace=\"inference\",container=\"$container\",resource=\"cpu\"})" }
+          ],
+          "fieldConfig": { "defaults": { "unit": "short", "min": 0 }, "overrides": [] }
+        },
+        {
+          "id": 6, "type": "timeseries", "title": "Server memory (working set) vs limit",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            { "refId": "A", "legendFormat": "used", "expr": "sum(container_memory_working_set_bytes{namespace=\"inference\",container=\"$container\"})" },
+            { "refId": "B", "legendFormat": "limit", "expr": "sum(kube_pod_container_resource_limits{namespace=\"inference\",container=\"$container\",resource=\"memory\"})" }
+          ],
+          "fieldConfig": { "defaults": { "unit": "bytes", "min": 0 }, "overrides": [] }
+        },
+        {
+          "id": 7, "type": "timeseries", "title": "Server CPU throttled (% of periods)",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [ { "refId": "A", "legendFormat": "throttled", "expr": "100 * sum(rate(container_cpu_cfs_throttled_periods_total{namespace=\"inference\",container=\"$container\"}[2m])) / sum(rate(container_cpu_cfs_periods_total{namespace=\"inference\",container=\"$container\"}[2m]))" } ],
+          "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100 }, "overrides": [] }
+        },
+        {
+          "id": 8, "type": "timeseries", "title": "Harness CPU (cores; its limit is 0.5)",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [ { "refId": "A", "legendFormat": "harness", "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"bench\",container=\"harness\"}[2m]))" } ],
+          "fieldConfig": { "defaults": { "unit": "short", "min": 0 }, "overrides": [] }
+        },
+        {
+          "id": 9, "type": "timeseries", "title": "Node load (1 min) by node",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 20 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [ { "refId": "A", "legendFormat": "{{nodename}}", "expr": "node_load1 * on(instance) group_left(nodename) node_uname_info" } ],
+          "fieldConfig": { "defaults": { "unit": "short", "min": 0 }, "overrides": [] }
+        },
+        {
+          "id": 10, "type": "timeseries", "title": "Node CPU busy (%) by node",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 20 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [ { "refId": "A", "legendFormat": "{{nodename}}", "expr": "(100 - avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[2m])) * 100) * on(instance) group_left(nodename) node_uname_info" } ],
+          "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100 }, "overrides": [] }
+        },
+        {
+          "id": 11, "type": "timeseries", "title": "llama.cpp speed (tokens/s): generation and prompt",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 28 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            { "refId": "A", "legendFormat": "generation", "expr": "llamacpp:predicted_tokens_seconds" },
+            { "refId": "B", "legendFormat": "prompt", "expr": "llamacpp:prompt_tokens_seconds" }
+          ],
+          "fieldConfig": { "defaults": { "unit": "short", "min": 0 }, "overrides": [] }
+        },
+        {
+          "id": 12, "type": "timeseries", "title": "llama.cpp requests in flight and queued",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 28 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            { "refId": "A", "legendFormat": "processing", "expr": "llamacpp:requests_processing" },
+            { "refId": "B", "legendFormat": "deferred", "expr": "llamacpp:requests_deferred" }
+          ],
+          "fieldConfig": { "defaults": { "unit": "short", "min": 0 }, "overrides": [] }
+        },
+        {
+          "id": 13, "type": "text", "title": "How to read this dashboard",
+          "gridPos": { "h": 7, "w": 24, "x": 0, "y": 36 },
+          "options": {
+            "mode": "markdown",
+            "content": "**Pick the server** with the *Server container* menu (llama-server or ollama); the server panels follow it. The llama.cpp panels only have data for llama.cpp: **Ollama has no metrics endpoint**, so its cost comes only from the container CPU and memory panels.\n\n**Show one run's window** by adding its UTC times to the dashboard URL as epoch milliseconds, for example `/d/bench/benchmark?orgId=1&from=<start_ms>&to=<end_ms>&var-container=llama-server`. Convert a time with `date -u -d '2026-11-22T10:15:00Z' +%s%3N`. Use the `started_at` and `finished_at` from the run's `manifest.yaml`.\n\nCPU and memory come from the node's container metrics (scraped about once a minute), so very short runs are approximate. *CPU throttled* above a few percent means the server hit its CPU limit. The *harness* should stay well under its 0.5-core limit, otherwise the client is the bottleneck, not the server."
+          }
+        }
+      ]
+    }
