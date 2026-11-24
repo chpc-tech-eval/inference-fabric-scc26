@@ -1,0 +1,35 @@
+# Week 5 hardware record (workers)
+# run at: 2026-11-08T19:15:44Z by gavin
+
+k8s-worker-02 | CHANGED | rc=0 >>
+k8s-worker-02.novalocal
+CPU(s):                               8
+Model name:                           Intel Xeon Processor (Cascadelake)
+BIOS Model name:                      RHEL-9.6.0 PC (Q35 + ICH9, 2009)
+Thread(s) per core:                   1
+Socket(s):                            8
+L3 cache:                             128 MiB (8 instances)
+NUMA node(s):                         1
+avx2 avx512f avx512_vnni 
+               total        used        free      shared  buff/cache   available
+Mem:              15           2           3           0           9          12
+5.14.0-503.14.1.el9_5.x86_64
+Rocky Linux release 9.5 (Blue Onyx)
+k8s-worker-01 | CHANGED | rc=0 >>
+k8s-worker-01.novalocal
+CPU(s):                               8
+Model name:                           Intel Xeon Processor (Cascadelake)
+BIOS Model name:                      RHEL-9.6.0 PC (Q35 + ICH9, 2009)
+Thread(s) per core:                   1
+Socket(s):                            8
+L3 cache:                             128 MiB (8 instances)
+NUMA node(s):                         1
+avx2 avx512f avx512_vnni 
+               total        used        free      shared  buff/cache   available
+Mem:              15           3           0           0          11          11
+5.14.0-503.14.1.el9_5.x86_64
+Rocky Linux release 9.5 (Blue Onyx)
+
+## OpenStack flavor
+k8s-worker-01: {'name': 'C8.medium', 'original_name': 'C8.medium', 'description': None, 'disk': 100, 'is_public': True, 'ram': 16384, 'vcpus': 8, 'swap': 0, 'ephemeral': 0, 'is_disabled': None, 'rxtx_factor': None, 'extra_specs': {}, 'id': 'C8.medium', 'location': None}
+k8s-worker-02: {'name': 'C8.medium', 'original_name': 'C8.medium', 'description': None, 'disk': 100, 'is_public': True, 'ram': 16384, 'vcpus': 8, 'swap': 0, 'ephemeral': 0, 'is_disabled': None, 'rxtx_factor': None, 'extra_specs': {}, 'id': 'C8.medium', 'location': None}

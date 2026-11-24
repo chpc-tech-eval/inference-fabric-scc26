@@ -1,0 +1,18 @@
+# Week 5 clock sync (before benchmark runs)
+# run at: 2026-11-08T19:15:55Z by gavin
+
+api-lb-01 | CHANGED | rc=0 >>
+System time     : 0.000074754 seconds slow of NTP time
+Leap status     : Normal
+k8s-worker-01 | CHANGED | rc=0 >>
+System time     : 0.000001742 seconds slow of NTP time
+Leap status     : Normal
+k8s-cp-01 | CHANGED | rc=0 >>
+System time     : 0.000101944 seconds slow of NTP time
+Leap status     : Normal
+k8s-worker-02 | CHANGED | rc=0 >>
+System time     : 0.000047085 seconds slow of NTP time
+Leap status     : Normal
+edge-01 | CHANGED | rc=0 >>
+System time     : 0.000052849 seconds slow of NTP time
+Leap status     : Normal
