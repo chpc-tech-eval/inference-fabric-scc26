@@ -4,7 +4,7 @@ metadata:
   name: llm-cpu
   namespace: inference
 spec:
-  replicas: 0
+  replicas: 1
   strategy:
     type: Recreate
   selector:
@@ -26,10 +26,10 @@ spec:
             - sh
             - -c
             - |
-              MODEL="/models/qwen2.5-1.5b-instruct-q4_k_m.gguf"
+              MODEL="/models/qwen2.5-0.5b-instruct-q4_k_m.gguf"
               if [ ! -f "$MODEL" ]; then
                 curl -fL -o "$MODEL" \
-                  "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q4_k_m.gguf"
+                  "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf"
               fi
           volumeMounts:
             - name: models
@@ -39,13 +39,13 @@ spec:
           image: ghcr.io/ggml-org/llama.cpp@sha256:e3032ea0712da96dec820c770626385de4322dd06619fb5829256a504bbc9375
           args:
             - "-m"
-            - "/models/qwen2.5-1.5b-instruct-q4_k_m.gguf"
+            - "/models/qwen2.5-0.5b-instruct-q4_k_m.gguf"
             - "--host"
             - "0.0.0.0"
             - "--port"
             - "8080"
             - "--alias"
-            - "qwen2.5-1.5b-instruct"
+            - "qwen2.5-0.5b-instruct"
             - "--threads"
             - "6"
             - "--parallel"
