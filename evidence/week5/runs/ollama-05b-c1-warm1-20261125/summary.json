@@ -1,0 +1,130 @@
+{
+  "harness_version": "1.0",
+  "run_id": "ollama-05b-c1-warm1-20261125",
+  "phase": "warm",
+  "started_at": "2026-11-25T09:39:17.093Z",
+  "finished_at": "2026-11-25T09:40:31.858Z",
+  "config": {
+    "target_url": "http://ollama-cpu.inference.svc.cluster.local:11434/v1",
+    "model": "qwen2.5-0.5b-bench",
+    "concurrency": 1,
+    "max_tokens": 256,
+    "temperature": 0.0,
+    "max_prompts": 0,
+    "request_timeout_s": 300.0,
+    "api_key_used": false,
+    "cache_bust": true,
+    "server_parallel": "4",
+    "server_ctx": "4096"
+  },
+  "prompts_sha256": "31b1f1c376f6cbfcd4ae580bd471cc6afd14aae4ec43fc2ca0d43ac0cbfc84e2",
+  "requests": 20,
+  "ok": 20,
+  "failed": 0,
+  "by_status": {
+    "ok": 20
+  },
+  "wall_s": 74.766,
+  "total_output_tokens": 2752,
+  "aggregate_tokens_per_s": 36.808,
+  "ttft_s": {
+    "n": 20,
+    "median": 0.9304,
+    "p95": 1.6691,
+    "min": 0.0899,
+    "max": 1.711
+  },
+  "total_s": {
+    "n": 20,
+    "median": 3.8779,
+    "p95": 6.58,
+    "min": 0.7115,
+    "max": 7.2928
+  },
+  "tokens_per_s": {
+    "n": 20,
+    "median": 48.2465,
+    "p95": 54.541,
+    "min": 42.534,
+    "max": 56.124
+  },
+  "token_count_sources": [
+    "usage"
+  ],
+  "by_size": {
+    "short": {
+      "ok": 7,
+      "ttft_s": {
+        "n": 7,
+        "median": 0.1076,
+        "p95": 0.1948,
+        "min": 0.0899,
+        "max": 0.1948
+      },
+      "total_s": {
+        "n": 7,
+        "median": 1.2281,
+        "p95": 4.9562,
+        "min": 0.7115,
+        "max": 4.9562
+      },
+      "tokens_per_s": {
+        "n": 7,
+        "median": 54.037,
+        "p95": 56.124,
+        "min": 52.76,
+        "max": 56.124
+      }
+    },
+    "medium": {
+      "ok": 7,
+      "ttft_s": {
+        "n": 7,
+        "median": 0.9595,
+        "p95": 1.2914,
+        "min": 0.7664,
+        "max": 1.2914
+      },
+      "total_s": {
+        "n": 7,
+        "median": 3.8614,
+        "p95": 6.4608,
+        "min": 2.3093,
+        "max": 6.4608
+      },
+      "tokens_per_s": {
+        "n": 7,
+        "median": 47.832,
+        "p95": 49.718,
+        "min": 42.534,
+        "max": 49.718
+      }
+    },
+    "long": {
+      "ok": 6,
+      "ttft_s": {
+        "n": 6,
+        "median": 1.6482,
+        "p95": 1.711,
+        "min": 1.628,
+        "max": 1.711
+      },
+      "total_s": {
+        "n": 6,
+        "median": 5.2616,
+        "p95": 7.2928,
+        "min": 4.7094,
+        "max": 7.2928
+      },
+      "tokens_per_s": {
+        "n": 6,
+        "median": 46.0525,
+        "p95": 46.999,
+        "min": 45.864,
+        "max": 46.999
+      }
+    }
+  },
+  "python": "3.13.18",
+  "host": "bench-2nptv-rrmvr"
+}
