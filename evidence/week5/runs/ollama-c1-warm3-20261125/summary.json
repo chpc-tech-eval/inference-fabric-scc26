@@ -1,0 +1,130 @@
+{
+  "harness_version": "1.0",
+  "run_id": "ollama-c1-warm3-20261125",
+  "phase": "warm",
+  "started_at": "2026-11-25T08:38:35.867Z",
+  "finished_at": "2026-11-25T08:40:54.545Z",
+  "config": {
+    "target_url": "http://ollama-cpu.inference.svc.cluster.local:11434/v1",
+    "model": "qwen2.5-1.5b-bench",
+    "concurrency": 1,
+    "max_tokens": 256,
+    "temperature": 0.0,
+    "max_prompts": 0,
+    "request_timeout_s": 300.0,
+    "api_key_used": false,
+    "cache_bust": true,
+    "server_parallel": "4",
+    "server_ctx": "4096"
+  },
+  "prompts_sha256": "31b1f1c376f6cbfcd4ae580bd471cc6afd14aae4ec43fc2ca0d43ac0cbfc84e2",
+  "requests": 20,
+  "ok": 20,
+  "failed": 0,
+  "by_status": {
+    "ok": 20
+  },
+  "wall_s": 138.678,
+  "total_output_tokens": 2743,
+  "aggregate_tokens_per_s": 19.78,
+  "ttft_s": {
+    "n": 20,
+    "median": 1.7589,
+    "p95": 3.1631,
+    "min": 0.1533,
+    "max": 3.3531
+  },
+  "total_s": {
+    "n": 20,
+    "median": 8.1342,
+    "p95": 11.6238,
+    "min": 0.7142,
+    "max": 11.8398
+  },
+  "tokens_per_s": {
+    "n": 20,
+    "median": 26.188,
+    "p95": 31.189,
+    "min": 24.055,
+    "max": 35.145
+  },
+  "token_count_sources": [
+    "usage"
+  ],
+  "by_size": {
+    "short": {
+      "ok": 7,
+      "ttft_s": {
+        "n": 7,
+        "median": 0.2021,
+        "p95": 0.2305,
+        "min": 0.1533,
+        "max": 0.2305
+      },
+      "total_s": {
+        "n": 7,
+        "median": 1.1129,
+        "p95": 9.7576,
+        "min": 0.7142,
+        "max": 9.7576
+      },
+      "tokens_per_s": {
+        "n": 7,
+        "median": 29.232,
+        "p95": 35.145,
+        "min": 26.791,
+        "max": 35.145
+      }
+    },
+    "medium": {
+      "ok": 7,
+      "ttft_s": {
+        "n": 7,
+        "median": 1.802,
+        "p95": 2.4698,
+        "min": 1.4802,
+        "max": 2.4698
+      },
+      "total_s": {
+        "n": 7,
+        "median": 8.0956,
+        "p95": 10.636,
+        "min": 4.9168,
+        "max": 10.636
+      },
+      "tokens_per_s": {
+        "n": 7,
+        "median": 25.886,
+        "p95": 27.352,
+        "min": 25.334,
+        "max": 27.352
+      }
+    },
+    "long": {
+      "ok": 6,
+      "ttft_s": {
+        "n": 6,
+        "median": 3.1467,
+        "p95": 3.3531,
+        "min": 3.1263,
+        "max": 3.3531
+      },
+      "total_s": {
+        "n": 6,
+        "median": 10.6418,
+        "p95": 11.8398,
+        "min": 9.0045,
+        "max": 11.8398
+      },
+      "tokens_per_s": {
+        "n": 6,
+        "median": 25.304,
+        "p95": 25.779,
+        "min": 24.055,
+        "max": 25.779
+      }
+    }
+  },
+  "python": "3.13.18",
+  "host": "bench-2b7k6-vm77q"
+}
