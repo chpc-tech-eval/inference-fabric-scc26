@@ -1,0 +1,130 @@
+{
+  "harness_version": "1.0",
+  "run_id": "llamacpp-05b-c1-warm1-20261125",
+  "phase": "warm",
+  "started_at": "2026-11-25T14:00:54.646Z",
+  "finished_at": "2026-11-25T14:02:11.093Z",
+  "config": {
+    "target_url": "http://llm-cpu.inference.svc.cluster.local:8080/v1",
+    "model": "qwen2.5-0.5b-instruct",
+    "concurrency": 1,
+    "max_tokens": 256,
+    "temperature": 0.0,
+    "max_prompts": 0,
+    "request_timeout_s": 300.0,
+    "api_key_used": true,
+    "cache_bust": true,
+    "server_parallel": "4",
+    "server_ctx": "4096"
+  },
+  "prompts_sha256": "31b1f1c376f6cbfcd4ae580bd471cc6afd14aae4ec43fc2ca0d43ac0cbfc84e2",
+  "requests": 20,
+  "ok": 20,
+  "failed": 0,
+  "by_status": {
+    "ok": 20
+  },
+  "wall_s": 76.447,
+  "total_output_tokens": 2844,
+  "aggregate_tokens_per_s": 37.202,
+  "ttft_s": {
+    "n": 20,
+    "median": 0.9077,
+    "p95": 1.7213,
+    "min": 0.0802,
+    "max": 1.7221
+  },
+  "total_s": {
+    "n": 20,
+    "median": 3.8029,
+    "p95": 7.2402,
+    "min": 0.6746,
+    "max": 7.4894
+  },
+  "tokens_per_s": {
+    "n": 20,
+    "median": 48.1595,
+    "p95": 57.958,
+    "min": 44.026,
+    "max": 58.209
+  },
+  "token_count_sources": [
+    "usage"
+  ],
+  "by_size": {
+    "short": {
+      "ok": 7,
+      "ttft_s": {
+        "n": 7,
+        "median": 0.1052,
+        "p95": 0.1521,
+        "min": 0.0802,
+        "max": 0.1521
+      },
+      "total_s": {
+        "n": 7,
+        "median": 0.9224,
+        "p95": 4.7337,
+        "min": 0.6746,
+        "max": 4.7337
+      },
+      "tokens_per_s": {
+        "n": 7,
+        "median": 56.135,
+        "p95": 58.209,
+        "min": 54.933,
+        "max": 58.209
+      }
+    },
+    "medium": {
+      "ok": 7,
+      "ttft_s": {
+        "n": 7,
+        "median": 0.9383,
+        "p95": 1.3369,
+        "min": 0.797,
+        "max": 1.3369
+      },
+      "total_s": {
+        "n": 7,
+        "median": 3.9902,
+        "p95": 6.2361,
+        "min": 3.3361,
+        "max": 6.2361
+      },
+      "tokens_per_s": {
+        "n": 7,
+        "median": 48.078,
+        "p95": 49.63,
+        "min": 47.017,
+        "max": 49.63
+      }
+    },
+    "long": {
+      "ok": 6,
+      "ttft_s": {
+        "n": 6,
+        "median": 1.6808,
+        "p95": 1.7221,
+        "min": 1.6431,
+        "max": 1.7221
+      },
+      "total_s": {
+        "n": 6,
+        "median": 5.5782,
+        "p95": 7.4894,
+        "min": 3.5463,
+        "max": 7.4894
+      },
+      "tokens_per_s": {
+        "n": 6,
+        "median": 45.27,
+        "p95": 46.203,
+        "min": 44.026,
+        "max": 46.203
+      }
+    }
+  },
+  "python": "3.13.18",
+  "host": "bench-bsgps-mhvfk"
+}

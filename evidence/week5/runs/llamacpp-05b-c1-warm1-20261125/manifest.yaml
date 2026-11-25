@@ -1,0 +1,66 @@
+schema_version: "1.0"
+run_id: "llamacpp-05b-c1-warm1-20261125"
+project: "inference-fabric-scc26"
+status: "completed"
+started_at: "2026-11-25T14:00:43Z"
+finished_at: "2026-11-25T14:02:13Z"
+run:
+  tool: "llama.cpp"
+  concurrency: 1
+  phase: "warm"
+  repeat: 1
+source:
+  repository: "https://github.com/chpc-tech-eval/inference-fabric-scc26"
+  commit: "23d843a245ab6b2bb319d85da5f817ffee247ec2"
+  dirty: false
+software:
+  harness_image: "ghcr.io/chpc-tech-eval/inference-fabric-scc26/bench-harness@sha256:39592c92f226b53ae4328ade7dc0050a36cafb49a6a337e31dcc61536fb5f3ab"
+  harness_running_digest: "ghcr.io/chpc-tech-eval/inference-fabric-scc26/bench-harness@sha256:39592c92f226b53ae4328ade7dc0050a36cafb49a6a337e31dcc61536fb5f3ab"
+  server_image: "ghcr.io/ggml-org/llama.cpp@sha256:e3032ea0712da96dec820c770626385de4322dd06619fb5829256a504bbc9375"
+  server_settings:
+    cpu_limit: "6"
+    memory_limit: "6Gi"
+    threads: 6
+    parallel: 4
+    ctx_total: 16384
+    ctx_per_request: 4096
+model:
+  name: null
+  alias: "qwen2.5-0.5b-instruct"
+  file: "/models/qwen2.5-0.5b-instruct-q4_k_m.gguf"
+  file_sha256: "74a4da8c9fdbcd15bd1f6d01d621410d31c6fc00986f5eb687824e7b93d7a9db"
+inputs:
+  prompts_sha256: "31b1f1c376f6cbfcd4ae580bd471cc6afd14aae4ec43fc2ca0d43ac0cbfc84e2"
+  modelfile_sha256: null
+  harness_env:
+    RUN_ID: "llamacpp-05b-c1-warm1-20261125"
+    TARGET_URL: "http://llm-cpu.inference.svc.cluster.local:8080/v1"
+    MODEL: "qwen2.5-0.5b-instruct"
+    PHASE: "warm"
+    CONCURRENCY: "1"
+    MAX_PROMPTS: "0"
+    PARALLEL: "4"
+    CTX: "4096"
+hardware:
+  server_node: "k8s-worker-01.novalocal"
+  harness_node: "k8s-worker-02.novalocal"
+  flavor: "C8.medium"
+  cpu_model: "Intel Xeon Cascade Lake (virtual), AVX2/AVX-512/VNNI, no AMX"
+results:
+  files:
+    - name: "quiet-node.txt"
+      sha256: "443a70ae4d8d5a4eddd98fb58f8d75ce2a6de1827b84c35268a4dcc9f18a8eb9"
+      bytes: 2374
+    - name: "results.csv"
+      sha256: "b174bb91a5a86d5794bb4c0fd79d39d7167cbf175f51f26cf0d8baea3e2a250f"
+      bytes: 2371
+    - name: "summary.json"
+      sha256: "baed25aa4d07f90c7493d04db70af7a5b40dce874168192f3956149ba04481c6"
+      bytes: 2608
+resource_use:
+  source: "Prometheus (cAdvisor), server container only"
+  window_seconds: 90
+  cpu_cores_avg: 5.063
+  memory_gib_max: 0.405
+  note: "cAdvisor is scraped about once a minute, so very short windows are approximate"
+collection_warnings: []

@@ -1,0 +1,2 @@
+run_id,phase,prompt_id,size,worker,started_at,ttft_s,total_s,prompt_tokens,output_tokens,tokens_source,tokens_per_s,status,error
+ollama-05b-c1-cold1-20261125,cold,s01,short,1,2026-11-25T09:37:37.649Z,2.0597,2.7417,52,36,usage,52.782,ok,

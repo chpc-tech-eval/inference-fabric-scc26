@@ -1,0 +1,67 @@
+schema_version: "1.0"
+run_id: "ollama-05b-c1-warm3-20261125"
+project: "inference-fabric-scc26"
+status: "completed"
+started_at: "2026-11-25T09:48:32Z"
+finished_at: "2026-11-25T09:50:06Z"
+run:
+  tool: "ollama"
+  concurrency: 1
+  phase: "warm"
+  repeat: 3
+source:
+  repository: "https://github.com/chpc-tech-eval/inference-fabric-scc26"
+  commit: "dfe16485dd083da5dc81e15f6b30bb62a3f3b1b1"
+  dirty: false
+software:
+  harness_image: "ghcr.io/chpc-tech-eval/inference-fabric-scc26/bench-harness@sha256:39592c92f226b53ae4328ade7dc0050a36cafb49a6a337e31dcc61536fb5f3ab"
+  harness_running_digest: "ghcr.io/chpc-tech-eval/inference-fabric-scc26/bench-harness@sha256:39592c92f226b53ae4328ade7dc0050a36cafb49a6a337e31dcc61536fb5f3ab"
+  server_image: "docker.io/ollama/ollama@sha256:910d0d8107b538fb0894e63163eb195de0cc7aefcbc666dc62d3b18f71124592"
+  server_settings:
+    cpu_limit: "6"
+    memory_limit: "6Gi"
+    env:
+      OLLAMA_HOST: "0.0.0.0:11434"
+      OLLAMA_NUM_PARALLEL: "4"
+      OLLAMA_CONTEXT_LENGTH: "4096"
+      OLLAMA_KEEP_ALIVE: "-1"
+    note: "num_thread and num_ctx are set in the Modelfile (see modelfile_sha256)"
+model:
+  name: "qwen2.5-0.5b-bench"
+  ollama_id: "e0a74baf6573"
+  ollama_name: "qwen2.5-0.5b-bench:latest"
+inputs:
+  prompts_sha256: "31b1f1c376f6cbfcd4ae580bd471cc6afd14aae4ec43fc2ca0d43ac0cbfc84e2"
+  modelfile_sha256: "4b535212d0eac13fab8f77b256fa5e65749866fc529977717b8c813288188196"
+  harness_env:
+    RUN_ID: "ollama-05b-c1-warm3-20261125"
+    TARGET_URL: "http://ollama-cpu.inference.svc.cluster.local:11434/v1"
+    MODEL: "qwen2.5-0.5b-bench"
+    PHASE: "warm"
+    CONCURRENCY: "1"
+    MAX_PROMPTS: "0"
+    PARALLEL: "4"
+    CTX: "4096"
+hardware:
+  server_node: "k8s-worker-01.novalocal"
+  harness_node: "k8s-worker-02.novalocal"
+  flavor: "C8.medium"
+  cpu_model: "Intel Xeon Cascade Lake (virtual), AVX2/AVX-512/VNNI, no AMX"
+results:
+  files:
+    - name: "quiet-node.txt"
+      sha256: "4aae2d184142903426f1d70c945c196557d13b6cc02099075dc48fe7c3e8e6fd"
+      bytes: 2378
+    - name: "results.csv"
+      sha256: "d96e748d05649a1e805f4fd903f025765e91c79fbd28e887fc8e85c577d74a4f"
+      bytes: 2332
+    - name: "summary.json"
+      sha256: "ed1cd9d5b2cedcdc83a4f755e0b0762a7dd472217db32cdb1e700b4b9fbeeb0f"
+      bytes: 2610
+resource_use:
+  source: "Prometheus (cAdvisor), server container only"
+  window_seconds: 94
+  cpu_cores_avg: 5.894
+  memory_gib_max: 1.165
+  note: "cAdvisor is scraped about once a minute, so very short windows are approximate"
+collection_warnings: []

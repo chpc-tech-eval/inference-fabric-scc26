@@ -1,74 +1,6 @@
-student@LAPTOP-8NEA8J2B:~/inference-fabric-scc26$ cp /mnt/c/Users/Student/Downloads/{results.md,run-log.md,tokens-vs-concurrency.png} evidence/week5/
-python3 -I /mnt/c/Users/Student/Downloads/bench-pool.py evidence/week5/runs
-## Pooled warm requests per tool and users (all repeats together; median / 95th percentile, nearest rank)
+# Week 5 results: CPU inference, llama.cpp vs Ollama
 
-| tool | users | runs | requests | ok | TTFT s | total s | tokens/s | mean output tokens | mean prompt tokens |
-|---|---|---|---|---|---|---|---|---|---|
-| llamacpp | 1 | 3 | 60 | 60 | 1.76 / 3.21 | 7.16 / 10.95 | 25.38 / 29.36 | 121.6 | 402 |
-| llamacpp | 2 | 3 | 60 | 60 | 1.84 / 6.16 | 12.58 / 21.81 | 13.37 / 20.06 | 125.2 | 402 |
-| llamacpp | 4 | 3 | 60 | 60 | 1.98 / 3.44 | 14.93 / 26.91 | 10.85 / 17.05 | 117.4 | 402 |
-| ollama | 1 | 3 | 60 | 60 | 1.76 / 3.19 | 7.76 / 11.10 | 26.72 / 32.80 | 131.4 | 402 |
-| ollama | 2 | 3 | 60 | 60 | 1.84 / 3.25 | 13.90 / 23.15 | 13.39 / 19.00 | 134.3 | 402 |
-| ollama | 4 | 3 | 60 | 60 | 1.94 / 4.79 | 16.90 / 31.16 | 10.42 / 18.50 | 140.6 | 402 |
-
-## By prompt size (pooled): TTFT median s | tokens/s median | mean output tokens
-
-| tool | users | short | medium | long |
-|---|---|---|---|---|
-| llamacpp | 1 | 0.20 s | 27.5 | 73 | 1.79 s | 25.4 | 167 | 3.16 s | 24.6 | 126 |
-| llamacpp | 2 | 0.26 s | 14.3 | 78 | 1.87 s | 12.8 | 175 | 3.23 s | 11.9 | 122 |
-| llamacpp | 4 | 0.73 s | 15.2 | 65 | 1.99 s | 10.9 | 165 | 3.34 s | 8.1 | 123 |
-| ollama | 1 | 0.20 s | 29.8 | 83 | 1.80 s | 26.5 | 162 | 3.16 s | 25.7 | 152 |
-| ollama | 2 | 0.28 s | 15.1 | 73 | 1.88 s | 13.1 | 174 | 3.21 s | 11.8 | 161 |
-| ollama | 4 | 0.77 s | 14.9 | 84 | 1.98 s | 10.6 | 173 | 3.36 s | 8.6 | 169 |
-
-## Answers cut off at the token limit (output tokens = 256), pooled
-
-- llamacpp, 1 users: 4 of 60
-- llamacpp, 2 users: 5 of 60
-- llamacpp, 4 users: 1 of 60
-- ollama, 1 users: 4 of 60
-- ollama, 2 users: 7 of 60
-- ollama, 4 users: 5 of 60
-
-Failed requests: none
-student@LAPTOP-8NEA8J2B:~/inference-fabric-scc26$student@LAPTOP-8NEA8J2B:~/inference-fabric-scc26$ cp /mnt/c/Users/Student/Downloads/{results.md,run-log.md,tokens-vs-concurrency.png} evidence/week5/
-python3 -I /mnt/c/Users/Student/Downloads/bench-pool.py evidence/week5/runs
-## Pooled warm requests per tool and users (all repeats together; median / 95th percentile, nearest rank)
-
-| tool | users | runs | requests | ok | TTFT s | total s | tokens/s | mean output tokens | mean prompt tokens |
-|---|---|---|---|---|---|---|---|---|---|
-| llamacpp | 1 | 3 | 60 | 60 | 1.76 / 3.21 | 7.16 / 10.95 | 25.38 / 29.36 | 121.6 | 402 |
-| llamacpp | 2 | 3 | 60 | 60 | 1.84 / 6.16 | 12.58 / 21.81 | 13.37 / 20.06 | 125.2 | 402 |
-| llamacpp | 4 | 3 | 60 | 60 | 1.98 / 3.44 | 14.93 / 26.91 | 10.85 / 17.05 | 117.4 | 402 |
-| ollama | 1 | 3 | 60 | 60 | 1.76 / 3.19 | 7.76 / 11.10 | 26.72 / 32.80 | 131.4 | 402 |
-| ollama | 2 | 3 | 60 | 60 | 1.84 / 3.25 | 13.90 / 23.15 | 13.39 / 19.00 | 134.3 | 402 |
-| ollama | 4 | 3 | 60 | 60 | 1.94 / 4.79 | 16.90 / 31.16 | 10.42 / 18.50 | 140.6 | 402 |
-
-## By prompt size (pooled): TTFT median s | tokens/s median | mean output tokens
-
-| tool | users | short | medium | long |
-|---|---|---|---|---|
-| llamacpp | 1 | 0.20 s | 27.5 | 73 | 1.79 s | 25.4 | 167 | 3.16 s | 24.6 | 126 |
-| llamacpp | 2 | 0.26 s | 14.3 | 78 | 1.87 s | 12.8 | 175 | 3.23 s | 11.9 | 122 |
-| llamacpp | 4 | 0.73 s | 15.2 | 65 | 1.99 s | 10.9 | 165 | 3.34 s | 8.1 | 123 |
-| ollama | 1 | 0.20 s | 29.8 | 83 | 1.80 s | 26.5 | 162 | 3.16 s | 25.7 | 152 |
-| ollama | 2 | 0.28 s | 15.1 | 73 | 1.88 s | 13.1 | 174 | 3.21 s | 11.8 | 161 |
-| ollama | 4 | 0.77 s | 14.9 | 84 | 1.98 s | 10.6 | 173 | 3.36 s | 8.6 | 169 |
-
-## Answers cut off at the token limit (output tokens = 256), pooled
-
-- llamacpp, 1 users: 4 of 60
-- llamacpp, 2 users: 5 of 60
-- llamacpp, 4 users: 1 of 60
-- ollama, 1 users: 4 of 60
-- ollama, 2 users: 7 of 60
-- ollama, 4 users: 5 of 60
-
-Failed requests: none
-student@LAPTOP-8NEA8J2B:~/inference-fabric-scc26$# Week 5 results: CPU inference, llama.cpp vs Ollama
-
-Model: Qwen2.5-1.5B-Instruct, Q4_K_M. Both tools: 4 parallel slots, 4096 context per slot, 6 threads, 6 CPU / 6 GiB limits.
+Model: Qwen2.5-1.5B-Instruct, Q4_K_M (main results); an extra reduced matrix with Qwen2.5-0.5B-Instruct, Q4_K_M follows the main tables. Both tools: 4 parallel slots, 4096 context per slot, 6 threads, 6 CPU / 6 GiB limits.
 Servers on k8s-worker-01, benchmark harness on k8s-worker-02 (C8.medium, 8 vCPU / 16 GB, Intel Xeon Cascade Lake virtual, AVX2/AVX-512/VNNI, no AMX).
 Workload: 20 fixed prompts (7 short, 7 medium, 6 long), temperature 0, max 256 output tokens, harness image digest `sha256:39592c92…36ab` (prompts sha256 `31b1f1c3…84e2`).
 Every row below is the mean of three warm runs; the run IDs and their manifests are listed in `run-log.md`. All 20 runs completed, 20/20 requests ok each (cold runs 1/1).
@@ -107,6 +39,39 @@ The two cold numbers measure different things. Loading costs roughly 18 to 25 s 
 - Ollama p95 TTFT at 4 users (4.7 s against 3.4 s) is consistent in all three runs. It is the one difference that repeated; we have not investigated the cause.
 - Memory grows with run order in both tools (llama.cpp 2.3 to 4.5 GiB, Ollama 1.8 to 3.9 GiB across the warm runs), so peak memory is not a clean per-concurrency figure. Take it as "stays under the 6 GiB limit for this workload".
 
+## Extra: Qwen2.5-0.5B-Instruct (Q4_K_M), reduced matrix
+
+Same harness image, prompts, server settings and hardware as above, run on 2026-11-25. Reduced matrix: 1 and 4 users × 3 warm runs per tool, plus one cold check run per tool (no 2-user runs). Run folders are named `<tool>-05b-c<users>-<phase><n>-20261125`. All runs completed, 20/20 requests ok (cold 1/1).
+
+| Tool | Users | TTFT median s | TTFT p95 s | Total median s | Total p95 s | Tokens/s per user | Aggregate tokens/s | CPU avg (cores) | Peak memory GiB | Runs |
+|---|---|---|---|---|---|---|---|---|---|---|
+| llama.cpp 0.5B | 1 | 0.90 (0.90-0.91) | 1.71 | 3.82 (3.78-3.90) | 7.23 | 48.4 (48.2-48.9) | 37.0 | 5.06 (1 run) | 0.51 | [w1](runs/llamacpp-05b-c1-warm1-20261125/manifest.yaml) [w2](runs/llamacpp-05b-c1-warm2-20261125/manifest.yaml) [w3](runs/llamacpp-05b-c1-warm3-20261125/manifest.yaml) |
+| llama.cpp 0.5B | 4 | 0.99 (0.95-1.02) | 1.77 | 10.61 (10.05-11.71) | 17.90 | 16.6 (16.0-17.0) | 56.9 | no data | 0.83 | [w1](runs/llamacpp-05b-c4-warm1-20261125/manifest.yaml) [w2](runs/llamacpp-05b-c4-warm2-20261125/manifest.yaml) [w3](runs/llamacpp-05b-c4-warm3-20261125/manifest.yaml) |
+| Ollama 0.5B | 1 | 0.93 (0.93-0.94) | 1.67 | 3.90 (3.24-4.57) | 6.75 | 48.2 (48.0-48.3) | 36.7 | 5.89 (1 run) | 1.02 | [w1](runs/ollama-05b-c1-warm1-20261125/manifest.yaml) [w2](runs/ollama-05b-c1-warm2-20261125/manifest.yaml) [w3](runs/ollama-05b-c1-warm3-20261125/manifest.yaml) |
+| Ollama 0.5B | 4 | 1.01 (1.00-1.03) | 1.80 | 10.88 (9.55-12.17) | 19.33 | 15.3 (14.9-16.0) | 52.6 | 5.17 (1 run) | 1.39 | [w1](runs/ollama-05b-c4-warm1-20261125/manifest.yaml) [w2](runs/ollama-05b-c4-warm2-20261125/manifest.yaml) [w3](runs/ollama-05b-c4-warm3-20261125/manifest.yaml) |
+
+Cold check runs: llama.cpp [llamacpp-05b-c1-cold1-20261125](runs/llamacpp-05b-c1-cold1-20261125/manifest.yaml) TTFT 0.21 s; Ollama [ollama-05b-c1-cold1-20261125](runs/ollama-05b-c1-cold1-20261125/manifest.yaml) TTFT 2.06 s (the model load happens on the first request). Their memory figures are not meaningful: the Ollama run was sampled right after the model download, and the llama.cpp run is too short for the scrape.
+
+Pooled over all 60 warm requests per row (median / nearest-rank p95):
+
+| Tool | Users | TTFT s | Total s | Tokens/s | Mean output tokens | Cut at 256 tokens |
+|---|---|---|---|---|---|---|
+| llama.cpp 0.5B | 1 | 0.90 / 1.72 | 3.85 / 7.25 | 48.4 / 58.2 | 140.2 | 13 of 60 |
+| llama.cpp 0.5B | 4 | 1.00 / 1.78 | 11.15 / 18.35 | 16.6 / 25.2 | 147.2 | 14 of 60 |
+| Ollama 0.5B | 1 | 0.94 / 1.68 | 3.80 / 7.10 | 48.1 / 54.0 | 138.9 | 10 of 60 |
+| Ollama 0.5B | 4 | 1.03 / 1.80 | 10.95 / 18.91 | 15.3 / 23.3 | 150.6 | 13 of 60 |
+
+All 240 warm requests succeeded. TTFT by prompt size (1 / 4 users) is about 0.10 / 0.4 s for short, 0.95 / 1.03 s for medium and 1.67 / 1.75 s for long prompts, the same for both tools.
+
+What the extra runs show (same Q4_K_M quantisation, about a third of the parameters):
+- TTFT roughly halves: 0.90 s against 1.76 s with 1 user, 0.99 s against 1.97 s with 4 users (llama.cpp; Ollama is similar).
+- Speed per user is about 1.9x higher with 1 user (48 against 25 tokens/s) and about 1.5x higher with 4 users (16.6 against 10.7). Aggregate throughput with 4 users is about 1.8x higher (57 against 31 tokens/s for llama.cpp, 53 against 33 for Ollama).
+- Scaling from 1 to 4 users is smaller than for the 1.5B (aggregate x1.5 against x1.7): the smaller model leaves less decode work to share across slots.
+- Model load cost drops from about 18 s to about 2 s on Ollama's first request.
+- llama.cpp and Ollama are again equal at 1 user. At 4 users llama.cpp's per-user speed and aggregate throughput are about 8 % higher (aggregate 56.9 against 52.6 tokens/s), but the pooled total latency is level (median 11.15 s against 10.95 s) and the run ranges only just separate. The tools were also measured about five hours apart (Ollama about 09:40 to 10:00 UTC, llama.cpp about 14:00 to 14:20 UTC). We report no clear winner.
+- Peak memory stays around 0.4 to 1.5 GiB and rises with run order, as in the 1.5B runs.
+- CPU: only three runs have a figure (the Prometheus gap again), 5.1 to 5.9 cores.
+
 ## What each tool suits on CPU (this workload)
 
 | | llama.cpp server | Ollama |
@@ -129,7 +94,7 @@ On this hardware neither tool is the faster choice, so the choice is operational
 6. **Different times of day**: llama.cpp ran on 2026-11-24 (afternoon), Ollama on 2026-11-25 (morning). The VM is shared, so neighbour load may differ.
 7. **Same model, different downloads**: both use Qwen2.5-1.5B-Instruct Q4_K_M, but the files come from different sources and their hashes differ (recorded in the manifests).
 8. p95 columns are the mean of per-run p95 over 20 requests, so they are rough. Pooled percentiles over all 60 requests are in the last section.
-9. GPU/vLLM runs were not done.
+9. The 0.5B runs use a reduced matrix (no 2-user runs), and CPU is missing for most of them. GPU/vLLM runs were not done.
 
 ## Pooled percentiles (all 60 warm requests per row, nearest-rank p95)
 
