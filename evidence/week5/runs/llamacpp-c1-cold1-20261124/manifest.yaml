@@ -1,0 +1,70 @@
+schema_version: "1.0"
+run_id: "llamacpp-c1-cold1-20261124"
+project: "inference-fabric-scc26"
+status: "completed"
+started_at: "2026-11-24T10:20:41Z"
+finished_at: "2026-11-24T10:20:55Z"
+run:
+  tool: "llama.cpp"
+  concurrency: 1
+  phase: "cold"
+  repeat: null
+source:
+  repository: "https://github.com/chpc-tech-eval/inference-fabric-scc26"
+  commit: "ce0384dcabb7e4e4840518013dcf6c9c7a5d187c"
+  dirty: false
+software:
+  harness_image: "ghcr.io/chpc-tech-eval/inference-fabric-scc26/bench-harness@sha256:39592c92f226b53ae4328ade7dc0050a36cafb49a6a337e31dcc61536fb5f3ab"
+  harness_running_digest: "ghcr.io/chpc-tech-eval/inference-fabric-scc26/bench-harness@sha256:39592c92f226b53ae4328ade7dc0050a36cafb49a6a337e31dcc61536fb5f3ab"
+  server_image: "ghcr.io/ggml-org/llama.cpp@sha256:e3032ea0712da96dec820c770626385de4322dd06619fb5829256a504bbc9375"
+  server_settings:
+    cpu_limit: "6"
+    memory_limit: "6Gi"
+    threads: 6
+    parallel: 4
+    ctx_total: 16384
+    ctx_per_request: 4096
+model:
+  name: null
+  alias: "qwen2.5-1.5b-instruct"
+  file: "/models/qwen2.5-1.5b-instruct-q4_k_m.gguf"
+  file_sha256: "6a1a2eb6d15622bf3c96857206351ba97e1af16c30d7a74ee38970e434e9407e"
+inputs:
+  prompts_sha256: "31b1f1c376f6cbfcd4ae580bd471cc6afd14aae4ec43fc2ca0d43ac0cbfc84e2"
+  modelfile_sha256: null
+  harness_env:
+    RUN_ID: "llamacpp-c1-cold1-20261124"
+    TARGET_URL: "http://llm-cpu.inference.svc.cluster.local:8080/v1"
+    MODEL: "qwen2.5-1.5b-instruct"
+    PHASE: "cold"
+    CONCURRENCY: "1"
+    MAX_PROMPTS: "1"
+    PARALLEL: "4"
+    CTX: "4096"
+hardware:
+  server_node: "k8s-worker-01.novalocal"
+  harness_node: "k8s-worker-02.novalocal"
+  flavor: "C8.medium"
+  cpu_model: "Intel Xeon Cascade Lake (virtual), AVX2/AVX-512/VNNI, no AMX"
+results:
+  files:
+    - name: "quiet-node.txt"
+      sha256: "c60490c1f1c32d6cebdbd05f78901bd0e71861a1a67dab8949e73a33061c3928"
+      bytes: 2328
+    - name: "results.csv"
+      sha256: "ba8e19039b9dafdd1ea816a0f3d3025aa4c4e7b6859b19bed222729c9ea685fa"
+      bytes: 236
+    - name: "server-start.log"
+      sha256: "8ed4d9c9677fb2ecc414015a04d8c4ccc94a263d38fc02f34c687236f926f3f0"
+      bytes: 1782
+    - name: "summary.json"
+      sha256: "1f02b49f8b04f5e6b311c8ee1e493c390dad2ba22127487d3a078ef823c96fab"
+      bytes: 1682
+resource_use:
+  source: "Prometheus (cAdvisor), server container only"
+  window_seconds: 14
+  cpu_cores_avg: null
+  memory_gib_max: 2.135
+  note: "cAdvisor is scraped about once a minute, so very short windows are approximate"
+collection_warnings:
+  - "Prometheus returned no CPU/memory data for container llama-server in the run window"

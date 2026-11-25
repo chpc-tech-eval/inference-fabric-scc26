@@ -1,0 +1,45 @@
+# Quiet-node check for run llamacpp-c4-warm2-20261124 on k8s-worker-01
+# run at: 2026-11-24T11:40:35Z by faraaz
+
+## How busy is the node, and what's using it?
+ 13:40:34 up 27 days,  2:48,  0 users,  load average: 0.51, 1.97, 2.23
+
+top - 13:40:34 up 27 days,  2:48,  0 users,  load average: 0.51, 1.97, 2.23
+Tasks: 323 total,   1 running, 322 sleeping,   0 stopped,   0 zombie
+%Cpu(s):  1.4 us,  2.8 sy,  0.0 ni, 95.1 id,  0.0 wa,  0.7 hi,  0.0 si,  0.0 st
+MiB Mem :  15735.0 total,    345.8 free,   6429.1 used,   9318.5 buff/cache
+MiB Swap:      0.0 total,      0.0 free,      0.0 used.   9305.9 avail Mem 
+
+    PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND
+      1 root      20   0  175684  17852  10996 S   6.2   0.1   7:16.55 systemd
+     18 root      20   0       0      0      0 I   6.2   0.0  17:32.87 rcu_pre+
+   2234 root      20   0 3972596 229736  55552 S   6.2   1.4   1613:32 kubelet
+   2791 root      20   0 3400712  56836  35968 S   6.2   0.4 223:10.72 cilium-+
+  27195 70        20   0  173988  26496  24704 S   6.2   0.2   1:52.62 postgres
+ 932649 root      20   0       0      0      0 I   6.2   0.0   0:00.84 kworker+
+ 938901 faraaz    20   0   20828   7424   5888 R   6.2   0.0   0:00.02 top
+      2 root      20   0       0      0      0 S   0.0   0.0   0:01.99 kthreadd
+
+## What else is running on this node
+agent-control-plane acp-db-migration-8qz66 Completed
+argocd argocd-application-controller-0 Running
+argocd argocd-dex-server-6fb56f4676-5ldd7 Running
+argocd argocd-repo-server-fb87d8994-fr7vb Running
+cert-manager cert-manager-76ffbfcbfc-wvlzm Running
+cert-manager cert-manager-cainjector-6468bc96c7-d2bcm Running
+cert-manager cert-manager-webhook-558c6d4f4d-qfzgv Running
+inference llm-cpu-77d9c767c8-vnlgz Running
+kube-system cilium-envoy-hs8qb Running
+kube-system cilium-gsjdq Running
+kube-system kube-proxy-fpbsc Running
+kube-system openstack-cinder-csi-controllerplugin-b64d94ccf-8hdf8 Running
+kube-system openstack-cinder-csi-nodeplugin-886w8 Running
+kube-system sealed-secrets-controller-78d695b78f-fngzk Running
+monitoring grafana-7dd4b4c986-wp2cb Running
+monitoring prometheus-prometheus-node-exporter-v56p5 Running
+quantum-platform diagnostic-target-6d6f977b96-zddqv Running
+student-platform postgres-0 Running
+traefik traefik-psz89 Running
+
+## Is it quiet enough to run?
+QUIET: load is 0.51, go ahead

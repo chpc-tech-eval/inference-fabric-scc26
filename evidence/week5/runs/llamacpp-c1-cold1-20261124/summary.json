@@ -1,0 +1,82 @@
+{
+  "harness_version": "1.0",
+  "run_id": "llamacpp-c1-cold1-20261124",
+  "phase": "cold",
+  "started_at": "2026-11-24T10:20:52.092Z",
+  "finished_at": "2026-11-24T10:20:52.867Z",
+  "config": {
+    "target_url": "http://llm-cpu.inference.svc.cluster.local:8080/v1",
+    "model": "qwen2.5-1.5b-instruct",
+    "concurrency": 1,
+    "max_tokens": 256,
+    "temperature": 0.0,
+    "max_prompts": 1,
+    "request_timeout_s": 300.0,
+    "api_key_used": true,
+    "cache_bust": true,
+    "server_parallel": "4",
+    "server_ctx": "4096"
+  },
+  "prompts_sha256": "31b1f1c376f6cbfcd4ae580bd471cc6afd14aae4ec43fc2ca0d43ac0cbfc84e2",
+  "requests": 1,
+  "ok": 1,
+  "failed": 0,
+  "by_status": {
+    "ok": 1
+  },
+  "wall_s": 0.775,
+  "total_output_tokens": 17,
+  "aggregate_tokens_per_s": 21.938,
+  "ttft_s": {
+    "n": 1,
+    "median": 0.281,
+    "p95": 0.281,
+    "min": 0.281,
+    "max": 0.281
+  },
+  "total_s": {
+    "n": 1,
+    "median": 0.7737,
+    "p95": 0.7737,
+    "min": 0.7737,
+    "max": 0.7737
+  },
+  "tokens_per_s": {
+    "n": 1,
+    "median": 34.506,
+    "p95": 34.506,
+    "min": 34.506,
+    "max": 34.506
+  },
+  "token_count_sources": [
+    "usage"
+  ],
+  "by_size": {
+    "short": {
+      "ok": 1,
+      "ttft_s": {
+        "n": 1,
+        "median": 0.281,
+        "p95": 0.281,
+        "min": 0.281,
+        "max": 0.281
+      },
+      "total_s": {
+        "n": 1,
+        "median": 0.7737,
+        "p95": 0.7737,
+        "min": 0.7737,
+        "max": 0.7737
+      },
+      "tokens_per_s": {
+        "n": 1,
+        "median": 34.506,
+        "p95": 34.506,
+        "min": 34.506,
+        "max": 34.506
+      }
+    }
+  },
+  "python": "3.13.18",
+  "host": "bench-xnsdj-62j7t"
+}

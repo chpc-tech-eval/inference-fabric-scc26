@@ -1,0 +1,18 @@
+warn: LLAMA_ARG_HOST environment variable is set, but will be overwritten by command line argument --host
+warn: LLAMA_ARG_PORT environment variable is set, but will be overwritten by command line argument --port
+0.00.001.754 I srv  llama_server: initializing ...
+0.00.014.380 I cmn  common_param: common_params_print_info: verbosity = 3 (adjust with the `-lv N` CLI arg)
+0.00.017.126 I srv    load_model: loading model '/models/qwen2.5-1.5b-instruct-q4_k_m.gguf'
+0.00.426.913 W load: control-looking token: 128247 '</s>' was not control-type; this is probably a bug in the model. its type will be overridden
+0.24.365.221 I cmn          init: llama threadpool init, n_threads = 6
+0.24.674.805 I srv    load_model: initializing, n_slots = 4, n_ctx_slot = 4096, kv_unified = 'false'
+0.24.681.696 I srv  server_run_i: model loaded
+0.24.681.711 I srv  server_on_li: listening on http://0.0.0.0:8080
+6.25.939.664 I slot get_availabl: id  0 | task -1 | selected slot by LRU, n_tokens = 0, t_last = -1
+6.25.939.901 I slot launch_slot_: id  0 | task 6 | processing task, is_child = 0
+6.26.680.402 I slot print_timing: id  0 | task 6 | prompt eval time =     247.93 ms /    52 tokens (    4.77 ms per token,   209.74 tokens per second)
+6.26.680.409 I slot print_timing: id  0 | task 6 |        eval time =     492.45 ms /    17 tokens (   30.78 ms per token,    32.49 tokens per second)
+6.26.680.410 I slot print_timing: id  0 | task 6 |       total time =     740.38 ms /    69 tokens
+6.26.680.419 I slot print_timing: id  0 | task 6 |    graphs reused =         16
+6.26.680.420 I slot print_timing: id  0 | task 6 |   graph reallocs =          0    /     0        (same size) / (changed size)
+6.26.680.460 I slot      release: id  0 | task 6 | stop processing: n_tokens = 68, truncated = 0
