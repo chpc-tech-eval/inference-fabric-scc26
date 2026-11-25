@@ -281,6 +281,7 @@ def main():
     parser.add_argument("--job", help="name of the Kubernetes Job in namespace bench")
     parser.add_argument("--started", help="UTC start, e.g. 2026-11-22T10:15:00Z (default: from the Job)")
     parser.add_argument("--finished", help="UTC end (default: from the Job)")
+    parser.add_argument("--modelfile", default="bench/Modelfile.qwen2.5-1.5b-bench", help="Ollama Modelfile to hash")
     parser.add_argument("--model", help="model name as served (Ollama: the name shown by `ollama list`)")
     parser.add_argument("--status", choices=["completed", "failed"], default="completed")
     parser.add_argument("--reason", help="why the run failed")
@@ -351,7 +352,7 @@ def main():
     if not files and args.status == "completed":
         warn("no result files found in %s" % results_dir)
 
-    modelfile = Path("bench/Modelfile.qwen2.5-1.5b-bench")
+    modelfile = Path(args.modelfile)
     prompts = Path("bench/prompts.jsonl")
     server_node = server.get("node")
 
